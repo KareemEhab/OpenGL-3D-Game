@@ -1,6 +1,7 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <stb/stb_image.h>
 
 #include <fstream>
 #include <sstream>
@@ -17,7 +18,6 @@ using namespace std;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
-string loadShaderSrc(const char* filename);
 
 int main()
 {
@@ -51,11 +51,11 @@ int main()
 
 	// Vertex array
 	float vertices[] = {
-		// positions		colors
-		0.5f, 0.5f, 0.0f,	1.0f, 1.0f, 0.5f,	// top-right
-		-0.5f, 0.5f, 0.0f,	0.5f, 1.0f, 0.75f,	// top-left		
-		-0.5f, -0.5f, 0.0f, 0.6f, 1.0f, 0.2f,	// bottom-left	
-		0.5f, -0.5f, 0.0f,	1.0f, 0.2f, 1.0f,	// bottom-right	
+		// positions		colors				texture
+		0.5f, 0.5f, 0.0f,	1.0f, 1.0f, 0.5f,	1.0f, 1.0f,	// top-right
+		-0.5f, 0.5f, 0.0f,	0.5f, 1.0f, 0.75f,	0.0f, 1.0f,	// top-left		
+		-0.5f, -0.5f, 0.0f, 0.6f, 1.0f, 0.2f,	0.0f, 0.0f,	// bottom-left	
+		0.5f, -0.5f, 0.0f,	1.0f, 0.2f, 1.0f,	1.0f, 0.0f,	// bottom-right	
 	};
 
 	unsigned int indeces[] = {
@@ -81,17 +81,71 @@ int main()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indeces), indeces, GL_STATIC_DRAW);
 
 	// Set attribute pointer in shader
-
 	// Position attribute (Location = 0)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-
 	// Color attribute (Location = 1)
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+	// Texture attribute (Location = 2)
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
+	// Texture
+	unsigned int texture1, texture2;
+
+	glGenTextures(1, &texture1);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	
+	// Load Texture Image
+	int width, height, nChannels;
+	stbi_set_flip_vertically_on_load(true);
+	unsigned char* data = stbi_load("assets/image1.jpg", &width, &height, &nChannels, 0);
+
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		cout << "Failed to load texture" << endl;
+	}
+
+	stbi_image_free(data);
+
+	shader.activate();
+	shader.setInt("texture1", 0);
+
+	glGenTextures(1, &texture2);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+
+	data = stbi_load("assets/image2.png", &width, &height, &nChannels, 0);
+
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		cout << "Failed to load texture2" << endl;
+	}
+
+	stbi_image_free(data);
+
+	shader.activate();
+	shader.setInt("texture1", 1);
+
+	// Transform
 	glm::mat4 trans = glm::mat4(1.0f);
-	trans = glm::rotate(trans, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	trans = glm::rotate(trans, glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	shader.activate();
 	shader.setMat4("transform", trans);
 	shader2.activate();
@@ -106,6 +160,11 @@ int main()
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture2);
+
 		// Draw shapes
 		glBindVertexArray(VAO);
 
@@ -114,7 +173,7 @@ int main()
 		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
 		
 		// Second triangle
-		shader2.activate();
+		//shader2.activate();
 		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void*)(3 * sizeof(unsigned int)));
 		
 		glBindVertexArray(0);
