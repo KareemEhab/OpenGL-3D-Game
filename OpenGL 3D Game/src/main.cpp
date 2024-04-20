@@ -60,38 +60,73 @@ int main()
 	}
 
 	// Compile fragment shader
-	unsigned int fragmentShader;
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	unsigned int fragmentShader[2];
+
+	// Fragment Shader 1
+	fragmentShader[0] = glCreateShader(GL_FRAGMENT_SHADER);
 	string fragShaderSrc = loadShaderSrc("assets/fragment_core.glsl");
 	const GLchar* fragShader = fragShaderSrc.c_str();
-	glShaderSource(fragmentShader, 1, &fragShader, NULL);
-	glCompileShader(fragmentShader);
+	glShaderSource(fragmentShader[0], 1, &fragShader, NULL);
+	glCompileShader(fragmentShader[0]);
 
 	// Catch error
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+	glGetShaderiv(fragmentShader[0], GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infolog);
+		glGetShaderInfoLog(fragmentShader[0], 512, NULL, infolog);
 		cout << "Error compiling fragment shader:" << endl << infolog << endl;
 	}
 
-	unsigned int shaderProgram;
-	shaderProgram = glCreateProgram();
-
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
+	// Fragment Shader 2
+	fragmentShader[1] = glCreateShader(GL_FRAGMENT_SHADER);
+	fragShaderSrc = loadShaderSrc("assets/fragment_core2.glsl");
+	fragShader = fragShaderSrc.c_str();
+	glShaderSource(fragmentShader[1], 1, &fragShader, NULL);
+	glCompileShader(fragmentShader[1]);
 
 	// Catch error
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	glGetShaderiv(fragmentShader[0], GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infolog);
+		glGetShaderInfoLog(fragmentShader[0], 512, NULL, infolog);
+		cout << "Error compiling fragment shader:" << endl << infolog << endl;
+	}
+
+	// Shader Programs
+	unsigned int shaderProgram[2];
+
+	// Shader Program 1
+	shaderProgram[0] = glCreateProgram();
+	glAttachShader(shaderProgram[0], vertexShader);
+	glAttachShader(shaderProgram[0], fragmentShader[0]);
+	glLinkProgram(shaderProgram[0]);
+
+	// Catch error
+	glGetProgramiv(shaderProgram[0], GL_LINK_STATUS, &success);
+	if (!success)
+	{
+		glGetProgramInfoLog(shaderProgram[0], 512, NULL, infolog);
 		cout << "Linking error:" << endl << infolog << endl;
 	}
 
+	//Shader Program 2
+	shaderProgram[1] = glCreateProgram();
+	glAttachShader(shaderProgram[1], vertexShader);
+	glAttachShader(shaderProgram[1], fragmentShader[1]);
+	glLinkProgram(shaderProgram[1]);
+
+	// Catch error
+	glGetProgramiv(shaderProgram[1], GL_LINK_STATUS, &success);
+	if (!success)
+	{
+		glGetProgramInfoLog(shaderProgram[1], 512, NULL, infolog);
+		cout << "Linking error:" << endl << infolog << endl;
+	}
+
+	// Delete shaders after binding to programs
 	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+	glDeleteShader(fragmentShader[0]);
+	glDeleteShader(fragmentShader[1]);
 
 	// Vertex array
 	float vertices[] = {
@@ -138,9 +173,14 @@ int main()
 
 		// Draw shapes
 		glBindVertexArray(VAO);
-		glUseProgram(shaderProgram);
-		//glDrawArrays(GL_TRIANGLES, 0, 6);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+		// First triangle
+		glUseProgram(shaderProgram[0]);
+		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+		
+		// Second triangle
+		glUseProgram(shaderProgram[1]);
+		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void*)(3 * sizeof(unsigned int)));
 
 		// Send new frame to window
 		glfwSwapBuffers(window);
