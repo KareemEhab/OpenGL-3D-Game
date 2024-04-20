@@ -7,6 +7,10 @@
 #include <streambuf>
 #include <string>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 using namespace std;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -130,10 +134,11 @@ int main()
 
 	// Vertex array
 	float vertices[] = {
-		0.5f, 0.5f, 0.0f, // top-right
-		-0.5f, 0.5f, 0.0f, // top-left
-		-0.5f, -0.5f, 0.0f, // bottom-left
-		0.5f, -0.5f, 0.0f, // bottom-right
+		// positions		colors
+		0.5f, 0.5f, 0.0f,	1.0f, 1.0f, 0.5f,	// top-right
+		-0.5f, 0.5f, 0.0f,	0.5f, 1.0f, 0.75f,	// top-left		
+		-0.5f, -0.5f, 0.0f, 0.6f, 1.0f, 0.2f,	// bottom-left	
+		0.5f, -0.5f, 0.0f,	1.0f, 0.2f, 1.0f,	// bottom-right	
 	};
 
 	unsigned int indeces[] = {
@@ -154,13 +159,24 @@ int main()
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	// Set attribute pointer
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
 	// Set up EBO
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indeces), indeces, GL_STATIC_DRAW);
+
+	// Set attribute pointer in shader
+
+	// Position attribute (Location = 0)
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// Color attribute (Location = 1)
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	glm::mat4 trans = glm::mat4(1.0f);
+	trans = glm::rotate(trans, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	glUseProgram(shaderProgram[0]);
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram[0], "transform"), 1, GL_FALSE, glm::value_ptr(trans));
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -176,11 +192,13 @@ int main()
 
 		// First triangle
 		glUseProgram(shaderProgram[0]);
-		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		
 		// Second triangle
-		glUseProgram(shaderProgram[1]);
-		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void*)(3 * sizeof(unsigned int)));
+		//glUseProgram(shaderProgram[1]);
+		//glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void*)(3 * sizeof(unsigned int)));
+		
+		glBindVertexArray(0);
 
 		// Send new frame to window
 		glfwSwapBuffers(window);
