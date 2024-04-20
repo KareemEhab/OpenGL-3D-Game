@@ -19,6 +19,8 @@ using namespace std;
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
+float mixVal = 0.5f;
+
 int main()
 {
 	glfwInit();
@@ -170,6 +172,7 @@ int main()
 
 		// First triangle
 		shader.activate();
+		shader.setFloat("mixVal", mixVal);
 		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
 		
 		// Second triangle
@@ -202,5 +205,22 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
 		glfwSetWindowShouldClose(window, true);
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+	{
+		mixVal += .05f;
+		if (mixVal > 1)
+		{
+			mixVal = 1.0f;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	{
+		mixVal -= .05f;
+		if (mixVal < 0)
+		{
+			mixVal = 0.0f;
+		}
 	}
 }
