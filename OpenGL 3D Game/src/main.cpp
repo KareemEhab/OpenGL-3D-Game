@@ -95,9 +95,15 @@ int main()
 
 	// Vertex array
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f,
-		0.0f, 0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f
+		// First triangle
+		0.5f, 0.5f, 0.0f, // top-right
+		-0.5f, 0.5f, 0.0f, // top-left
+		-0.5f, -0.5f, 0.0f, // bottom-left
+
+		// Second triangle
+		-0.5f, -0.5f, 0.0f, // bottom-left
+		0.5f, -0.5f, 0.0f, // bottom-right
+		0.5f, 0.5f, 0.0f, // top-right
 	};
 
 	// VAO, VBO
@@ -128,7 +134,7 @@ int main()
 		// Draw shapes
 		glBindVertexArray(VAO);
 		glUseProgram(shaderProgram);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		// Send new frame to window
 		glfwSwapBuffers(window);
