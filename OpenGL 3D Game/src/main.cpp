@@ -14,12 +14,19 @@
 
 #include "Shader.h"
 
+#include "io/Keyboard.h"
+#include "io/Mouse.h"
+#include "io/Joystick.h"
+
 using namespace std;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
 float mixVal = 0.5f;
+
+glm::mat4 transform = glm::mat4(1.0f);
+Joystick mainJ(0);
 
 int main()
 {
@@ -46,6 +53,12 @@ int main()
 	glViewport(0, 0, 800, 600);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+	// Inputs
+	glfwSetKeyCallback(window, Keyboard::keyCallback);
+	glfwSetCursorPosCallback(window, Mouse::cursorPosCallback);
+	glfwSetMouseButtonCallback(window, Mouse::mouseButtonCallback);
+	glfwSetScrollCallback(window, Mouse::mouseWheelCallback);
 
 	// Shaders
 	Shader shader("assets/vertex_core.glsl", "assets/fragment_core.glsl");
@@ -146,12 +159,21 @@ int main()
 	shader.setInt("texture1", 1);
 
 	// Transform
-	glm::mat4 trans = glm::mat4(1.0f);
-	trans = glm::rotate(trans, glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	transform = glm::rotate(transform, glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	shader.activate();
-	shader.setMat4("transform", trans);
+	shader.setMat4("transform", transform);
 	shader2.activate();
-	shader2.setMat4("transform", trans);
+	shader2.setMat4("transform", transform);
+
+	mainJ.update();
+	if (mainJ.isPresent())
+	{
+		cout << mainJ.getName() << " is present." << endl;
+	}
+	else
+	{
+		cout << "No joystick present." << endl;
+	}
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -172,6 +194,7 @@ int main()
 
 		// First triangle
 		shader.activate();
+		shader.setMat4("transform", transform);
 		shader.setFloat("mixVal", mixVal);
 		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
 		
@@ -202,12 +225,12 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 void processInput(GLFWwindow* window)
 {
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	if (Keyboard::key(GLFW_KEY_ESCAPE) || mainJ.buttonState(GLFW_JOYSTICK_BTN_RIGHT)) 
 	{
 		glfwSetWindowShouldClose(window, true);
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+	if (Keyboard::keyDown(GLFW_KEY_UP))
 	{
 		mixVal += .05f;
 		if (mixVal > 1)
@@ -215,7 +238,7 @@ void processInput(GLFWwindow* window)
 			mixVal = 1.0f;
 		}
 	}
-	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	if (Keyboard::key(GLFW_KEY_DOWN))
 	{
 		mixVal -= .05f;
 		if (mixVal < 0)
@@ -223,4 +246,35 @@ void processInput(GLFWwindow* window)
 			mixVal = 0.0f;
 		}
 	}
+	if (Keyboard::key(GLFW_KEY_W))
+	{
+		transform = glm::translate(transform, glm::vec3(0.0f, 0.1f, 0.0f));
+	}
+	if (Keyboard::key(GLFW_KEY_S))
+	{
+		transform = glm::translate(transform, glm::vec3(0.0f, -0.1f, 0.0f));
+	}
+	if (Keyboard::key(GLFW_KEY_A))
+	{
+		transform = glm::translate(transform, glm::vec3(-0.1f, 0.0f, 0.0f));
+	}
+	if (Keyboard::key(GLFW_KEY_D))
+	{
+		transform = glm::translate(transform, glm::vec3(0.1f, 0.0f, 0.0f));
+	}
+
+	/*mainJ.update();
+
+	float lx = mainJ.axesState(GLFW_JOYSTICK_AXES_LEFT_STICK_X);
+	float ly = -mainJ.axesState(GLFW_JOYSTICK_AXES_LEFT_STICK_Y);
+
+
+	if (abs(lx) > 0.05f)
+	{
+		transform = glm::translate(transform, glm::vec3(lx / 10, 0.0f, 0.0f));
+	}
+	if (abs(ly) > 0.05f)
+	{
+		transform = glm::translate(transform, glm::vec3(0.0f, ly / 10.0f, 0.0f));
+	}*/
 }
