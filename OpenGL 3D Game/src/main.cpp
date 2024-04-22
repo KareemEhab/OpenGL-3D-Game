@@ -28,6 +28,9 @@ float mixVal = 0.5f;
 glm::mat4 transform = glm::mat4(1.0f);
 Joystick mainJ(0);
 
+unsigned int SCREEN_W = 800, SCREEN_H = 600;
+float x, y, z;
+
 int main()
 {
 	glfwInit();
@@ -35,7 +38,7 @@ int main()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	//
-	GLFWwindow* window = glfwCreateWindow(800, 600, "Window Title", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(SCREEN_W, SCREEN_H, "Window Title", NULL, NULL);
 	if (window == NULL)
 	{
 		cout << "Could not create window" << endl;
@@ -50,9 +53,11 @@ int main()
 		glfwTerminate();
 		return -1;
 	}
-	glViewport(0, 0, 800, 600);
+	glViewport(0, 0, SCREEN_W, SCREEN_H);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+	glEnable(GL_DEPTH_TEST);
 
 	// Inputs
 	glfwSetKeyCallback(window, Keyboard::keyCallback);
@@ -65,24 +70,69 @@ int main()
 	Shader shader2("assets/vertex_core.glsl", "assets/fragment_core2.glsl");
 
 	// Vertex array
-	float vertices[] = {
-		// positions		colors				texture
-		0.5f, 0.5f, 0.0f,	1.0f, 1.0f, 0.5f,	1.0f, 1.0f,	// top-right
-		-0.5f, 0.5f, 0.0f,	0.5f, 1.0f, 0.75f,	0.0f, 1.0f,	// top-left		
-		-0.5f, -0.5f, 0.0f, 0.6f, 1.0f, 0.2f,	0.0f, 0.0f,	// bottom-left	
-		0.5f, -0.5f, 0.0f,	1.0f, 0.2f, 1.0f,	1.0f, 0.0f,	// bottom-right	
-	};
 
-	unsigned int indeces[] = {
-		0, 1, 2,
-		2, 3, 0
+	//float vertices[] = {
+	//	// positions		colors				texture
+	//	0.5f, 0.5f, 0.0f,	1.0f, 1.0f, 0.5f,	1.0f, 1.0f,	// top-right
+	//	-0.5f, 0.5f, 0.0f,	0.5f, 1.0f, 0.75f,	0.0f, 1.0f,	// top-left		
+	//	-0.5f, -0.5f, 0.0f, 0.6f, 1.0f, 0.2f,	0.0f, 0.0f,	// bottom-left	
+	//	0.5f, -0.5f, 0.0f,	1.0f, 0.2f, 1.0f,	1.0f, 0.0f,	// bottom-right	
+	//};
+
+	//unsigned int indeces[] = {
+	//	0, 1, 2,
+	//	2, 3, 0
+	//};
+
+	float vertices[] = {
+	// position				// tex
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 	};
 
 	// VAO, VBO, EBO
-	unsigned int VAO, VBO, EBO;
+	unsigned int VAO, VBO;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
 
 	// Bind VAO for use
 	glBindVertexArray(VAO);
@@ -91,23 +141,16 @@ int main()
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	// Set up EBO
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indeces), indeces, GL_STATIC_DRAW);
-
 	// Set attribute pointer in shader
 	// Position attribute (Location = 0)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-	// Color attribute (Location = 1)
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	// Texture attribute (Location = 1)
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-	// Texture attribute (Location = 2)
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
 
 	// Texture
-	unsigned int texture1, texture2;
+	unsigned int texture1, texture2, texture3;
 
 	glGenTextures(1, &texture1);
 	glBindTexture(GL_TEXTURE_2D, texture1);
@@ -138,6 +181,7 @@ int main()
 	shader.activate();
 	shader.setInt("texture1", 0);
 
+	// Texture 2
 	glGenTextures(1, &texture2);
 	glBindTexture(GL_TEXTURE_2D, texture2);
 
@@ -156,14 +200,38 @@ int main()
 	stbi_image_free(data);
 
 	shader.activate();
-	shader.setInt("texture1", 1);
+	shader.setInt("texture2", 1);
+	
+	// Texture 3
+	glGenTextures(1, &texture3);
+	glBindTexture(GL_TEXTURE_2D, texture3);
+
+	data = stbi_load("assets/image3.png", &width, &height, &nChannels, 0);
+
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		cout << "Failed to load texture3" << endl;
+	}
+
+	stbi_image_free(data);
+
+	shader.activate();
+	shader.setInt("texture3", 2);
 
 	// Transform
-	transform = glm::rotate(transform, glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	//transform = glm::rotate(transform, glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 	shader.activate();
 	shader.setMat4("transform", transform);
 	shader2.activate();
 	shader2.setMat4("transform", transform);
+
+	float angle = 0.0f;
+	float rotationSpeed = 0.005f;
 
 	mainJ.update();
 	if (mainJ.isPresent())
@@ -175,6 +243,10 @@ int main()
 		cout << "No joystick present." << endl;
 	}
 
+	x = 0.0f;
+	y = 0.0f;
+	z = 3.0f;
+
 	while (!glfwWindowShouldClose(window))
 	{
 		// Process Input
@@ -182,26 +254,39 @@ int main()
 
 		// Render
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, texture3);
 
 		// Draw shapes
 		glBindVertexArray(VAO);
 
-		// First triangle
+		glm::mat4 model = glm::mat4(1.0f);
+		glm::mat4 view = glm::mat4(1.0f);
+		glm::mat4 projection = glm::mat4(1.0f);
+
+		model = glm::rotate(model, (float)glfwGetTime() * glm::radians(-55.0f), glm::vec3(0.5f));
+		view = glm::translate(view, glm::vec3(-x, -y, -z));
+		projection = glm::perspective(glm::radians(45.0f), (float)SCREEN_W / (float)SCREEN_H, 0.1f, 100.0f);
+
 		shader.activate();
-		shader.setMat4("transform", transform);
+		// Set uniform variables
+		shader.setMat4("model", model);
+		shader.setMat4("view", view);
+		shader.setMat4("projection", projection);
 		shader.setFloat("mixVal", mixVal);
-		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
-		
-		// Second triangle
-		//shader2.activate();
-		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void*)(3 * sizeof(unsigned int)));
-		
+
+		//glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		angle += rotationSpeed;
+		angle = fmod(angle, 360.0f);
+
 		glBindVertexArray(0);
 
 		// Send new frame to window
@@ -212,7 +297,6 @@ int main()
 	// Clean up the memory
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
 
 	glfwTerminate();
 	return 0;
@@ -221,6 +305,8 @@ int main()
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
+	SCREEN_W = width;
+	SCREEN_H = height;
 }
 
 void processInput(GLFWwindow* window)
