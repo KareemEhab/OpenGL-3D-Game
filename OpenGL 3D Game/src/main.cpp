@@ -17,11 +17,12 @@
 #include "io/Keyboard.h"
 #include "io/Mouse.h"
 #include "io/Joystick.h"
+#include "io/Camera.h"
 
 using namespace std;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow* window);
+void processInput(GLFWwindow* window, double deltaTime);
 
 float mixVal = 0.5f;
 
@@ -29,6 +30,11 @@ glm::mat4 transform = glm::mat4(1.0f);
 Joystick mainJ(0);
 
 unsigned int SCREEN_W = 800, SCREEN_H = 600;
+
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
 float x, y, z;
 float theta = 45.0f;
 
@@ -65,6 +71,9 @@ int main()
 	glfwSetCursorPosCallback(window, Mouse::cursorPosCallback);
 	glfwSetMouseButtonCallback(window, Mouse::mouseButtonCallback);
 	glfwSetScrollCallback(window, Mouse::mouseWheelCallback);
+
+	// Disable cursor
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	// Shaders
 	Shader shader("assets/vertex_core.glsl", "assets/fragment_core.glsl");
@@ -251,8 +260,13 @@ int main()
 
 	while (!glfwWindowShouldClose(window))
 	{
+		// Calculate Delta time
+		double currentTime = glfwGetTime();
+		deltaTime = currentTime - lastFrame;
+		lastFrame = currentTime;
+
 		// Process Input
-		processInput(window);
+		processInput(window, deltaTime);
 
 		// Render
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -273,8 +287,8 @@ int main()
 		glm::mat4 projection = glm::mat4(1.0f);
 
 		model = glm::rotate(model, (float)glfwGetTime() * glm::radians(-55.0f), glm::vec3(0.5f));
-		view = glm::translate(view, glm::vec3(-x, -y, -z));
-		projection = glm::perspective(glm::radians(theta), (float)SCREEN_W / (float)SCREEN_H, 0.1f, 100.0f);
+		view = camera.getViewMatrix();
+		projection = glm::perspective(glm::radians(camera.zoom), (float)SCREEN_W / (float)SCREEN_H, 0.1f, 100.0f);
 
 		shader.activate();
 		// Set uniform variables
@@ -311,9 +325,9 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	SCREEN_H = height;
 }
 
-void processInput(GLFWwindow* window)
+void processInput(GLFWwindow* window, double deltaTime)
 {
-	if (Keyboard::key(GLFW_KEY_ESCAPE) || mainJ.buttonState(GLFW_JOYSTICK_BTN_RIGHT)) 
+	if (Keyboard::key(GLFW_KEY_ESCAPE) || mainJ.buttonState(GLFW_JOYSTICK_BTN_RIGHT))
 	{
 		glfwSetWindowShouldClose(window, true);
 	}
@@ -334,37 +348,43 @@ void processInput(GLFWwindow* window)
 			mixVal = 0.0f;
 		}
 	}
+
+	// Move camera
 	if (Keyboard::key(GLFW_KEY_W))
 	{
-		transform = glm::translate(transform, glm::vec3(0.0f, 0.1f, 0.0f));
+		camera.updateCameraPos(CameraDirection::FORWARD, deltaTime);
 	}
 	if (Keyboard::key(GLFW_KEY_S))
 	{
-		transform = glm::translate(transform, glm::vec3(0.0f, -0.1f, 0.0f));
+		camera.updateCameraPos(CameraDirection::BACKWARD, deltaTime);
 	}
 	if (Keyboard::key(GLFW_KEY_A))
 	{
-		transform = glm::translate(transform, glm::vec3(-0.1f, 0.0f, 0.0f));
+		camera.updateCameraPos(CameraDirection::LEFT, deltaTime);
 	}
 	if (Keyboard::key(GLFW_KEY_D))
 	{
-		transform = glm::translate(transform, glm::vec3(0.1f, 0.0f, 0.0f));
+		camera.updateCameraPos(CameraDirection::RIGHT, deltaTime);
 	}
-	double scrollDY = Mouse::getScrollDY();
-	if (scrollDY > 0) {
-		// Increase theta
-		theta += 5.0f;
-		if (theta > 90.0f) {
-			theta = 90.0f;
-		}
+	if (Keyboard::key(GLFW_KEY_SPACE))
+	{
+		camera.updateCameraPos(CameraDirection::UP, deltaTime);
 	}
-	else if (scrollDY < 0) {
-		// Decrease theta
-		theta -= 5.0f;
-		if (theta < 0.0f) {
-			theta = 0.0f;
-		}
+	if (Keyboard::key(GLFW_KEY_LEFT_CONTROL))
+	{
+		camera.updateCameraPos(CameraDirection::DOWN, deltaTime);
 	}
+
+	double dx = Mouse::getDX(), dy = Mouse::getDY();
+	if (dx != 0 || dy != 0)
+	{
+		cout << dy << endl;
+		camera.updateCameraDirection(dx, dy);
+	}
+
+	double scrollDy = Mouse::getScrollDY();
+	if(scrollDy != 0)
+		camera.updateCameraZoom(scrollDy);
 
 	/*mainJ.update();
 

@@ -31,6 +31,9 @@ void Mouse::cursorPosCallback(GLFWwindow* window, double _x, double _y)
 
 	dx = x - lastX;
 	dy = lastY - y; // Inverted for regular vertical scroll not inverted
+
+	lastX = x;
+	lastY = y;
 }
 
 void Mouse::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
