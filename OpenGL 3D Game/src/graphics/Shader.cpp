@@ -1,13 +1,19 @@
 #include "Shader.h"
 
+Shader::Shader() {}
 
 Shader::Shader(const char* vertexShaderPath, const char* fragmentShaderPath)
+{
+	generate(vertexShaderPath, fragmentShaderPath);
+}
+
+void Shader::generate(const char* vertexShaderPath, const char* fragShaderPath)
 {
 	int success;
 	char infolog[512];
 
 	GLuint vertexShader = compileShader(vertexShaderPath, GL_VERTEX_SHADER);
-	GLuint fragmentShader = compileShader(fragmentShaderPath, GL_FRAGMENT_SHADER);
+	GLuint fragmentShader = compileShader(fragShaderPath, GL_FRAGMENT_SHADER);
 
 	id = glCreateProgram();
 	glAttachShader(id, vertexShader);
