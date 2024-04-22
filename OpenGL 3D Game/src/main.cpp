@@ -30,6 +30,7 @@ Joystick mainJ(0);
 
 unsigned int SCREEN_W = 800, SCREEN_H = 600;
 float x, y, z;
+float theta = 45.0f;
 
 int main()
 {
@@ -246,6 +247,7 @@ int main()
 	x = 0.0f;
 	y = 0.0f;
 	z = 3.0f;
+	glm::mat4 model = glm::mat4(1.0f);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -272,7 +274,7 @@ int main()
 
 		model = glm::rotate(model, (float)glfwGetTime() * glm::radians(-55.0f), glm::vec3(0.5f));
 		view = glm::translate(view, glm::vec3(-x, -y, -z));
-		projection = glm::perspective(glm::radians(45.0f), (float)SCREEN_W / (float)SCREEN_H, 0.1f, 100.0f);
+		projection = glm::perspective(glm::radians(theta), (float)SCREEN_W / (float)SCREEN_H, 0.1f, 100.0f);
 
 		shader.activate();
 		// Set uniform variables
@@ -347,6 +349,21 @@ void processInput(GLFWwindow* window)
 	if (Keyboard::key(GLFW_KEY_D))
 	{
 		transform = glm::translate(transform, glm::vec3(0.1f, 0.0f, 0.0f));
+	}
+	double scrollDY = Mouse::getScrollDY();
+	if (scrollDY > 0) {
+		// Increase theta
+		theta += 5.0f;
+		if (theta > 90.0f) {
+			theta = 90.0f;
+		}
+	}
+	else if (scrollDY < 0) {
+		// Decrease theta
+		theta -= 5.0f;
+		if (theta < 0.0f) {
+			theta = 0.0f;
+		}
 	}
 
 	/*mainJ.update();
