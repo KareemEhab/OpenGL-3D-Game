@@ -16,6 +16,7 @@
 #include "graphics/Texture.h"
 
 #include "graphics/models/Cube.hpp"
+#include "graphics/models/Lamp.hpp"
 
 #include "io/Keyboard.h"
 #include "io/Mouse.h"
@@ -25,10 +26,7 @@
 
 using namespace std;
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(double deltaTime);
-
-float mixVal = 0.5f;
 
 Joystick mainJ(0);
 
@@ -65,11 +63,14 @@ int main()
 
 	// Shaders
 	Shader shader("assets/object.vs", "assets/object.fs");
-	Shader shader2("assets/object.vs", "assets/object2.fs");
+	Shader lampShader("assets/object.vs", "assets/lamp.fs");
 
 	// Models
-	Cube cube(glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(1.0f));
+	Cube cube(Material::gold, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(1.0f));
 	cube.init();
+
+	Lamp lamp(glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(-1.0f, -0.5f, -0.5f), glm::vec3(0.25f));
+	lamp.init();
 
 	// Joystick
 	mainJ.update();
@@ -94,6 +95,12 @@ int main()
 		screen.update();
 		shader.activate();
 
+		shader.set3Float("light.position", lamp.pos);
+		shader.set3Float("viewPos", camera.getPos());
+		shader.set3Float("light.ambient", lamp.ambient);
+		shader.set3Float("light.diffuse", lamp.diffuse);
+		shader.set3Float("light.specular", lamp.specular);
+
 		// Draw
 		glm::mat4 view = glm::mat4(1.0f);
 		glm::mat4 projection = glm::mat4(1.0f);
@@ -104,76 +111,44 @@ int main()
 		// Set uniform variables
 		shader.setMat4("view", view);
 		shader.setMat4("projection", projection);
-		shader.setFloat("mixVal", mixVal);
 
 		cube.render(shader);
+
+		lampShader.activate();
+		lampShader.setMat4("view", view);
+		lampShader.setMat4("projection", projection);
+		lamp.render(lampShader);
 
 		// Send new frame to window
 		screen.newFrame();
 	}
 
-	// Clean up the memory
+	cube.cleanup();
+	lamp.cleanup();
 
 	glfwTerminate();
 	return 0;
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-	glViewport(0, 0, width, height);
-	SCREEN_W = width;
-	SCREEN_H = height;
-}
-
+// Inputs
 void processInput(double deltaTime)
 {
 	if (Keyboard::key(GLFW_KEY_ESCAPE) || mainJ.buttonState(GLFW_JOYSTICK_BTN_RIGHT))
-	{
 		screen.setShouldClose(true);
-	}
-
-	if (Keyboard::keyDown(GLFW_KEY_UP))
-	{
-		mixVal += .05f;
-		if (mixVal > 1)
-		{
-			mixVal = 1.0f;
-		}
-	}
-	if (Keyboard::key(GLFW_KEY_DOWN))
-	{
-		mixVal -= .05f;
-		if (mixVal < 0)
-		{
-			mixVal = 0.0f;
-		}
-	}
 
 	// Move camera
 	if (Keyboard::key(GLFW_KEY_W))
-	{
 		camera.updateCameraPos(CameraDirection::FORWARD, deltaTime);
-	}
 	if (Keyboard::key(GLFW_KEY_S))
-	{
 		camera.updateCameraPos(CameraDirection::BACKWARD, deltaTime);
-	}
 	if (Keyboard::key(GLFW_KEY_A))
-	{
 		camera.updateCameraPos(CameraDirection::LEFT, deltaTime);
-	}
 	if (Keyboard::key(GLFW_KEY_D))
-	{
 		camera.updateCameraPos(CameraDirection::RIGHT, deltaTime);
-	}
 	if (Keyboard::key(GLFW_KEY_SPACE))
-	{
 		camera.updateCameraPos(CameraDirection::UP, deltaTime);
-	}
 	if (Keyboard::key(GLFW_KEY_LEFT_CONTROL))
-	{
 		camera.updateCameraPos(CameraDirection::DOWN, deltaTime);
-	}
 
 	double dx = Mouse::getDX(), dy = Mouse::getDY();
 	if (dx != 0 || dy != 0)
@@ -183,6 +158,7 @@ void processInput(double deltaTime)
 	if(scrollDy != 0)
 		camera.updateCameraZoom(scrollDy);
 
+	// Joystick example
 	/*mainJ.update();
 
 	float lx = mainJ.axesState(GLFW_JOYSTICK_AXES_LEFT_STICK_X);

@@ -23,6 +23,7 @@ public:
 	void updateCameraZoom(double dy);
 
 	float getZoom() { return zoom; }
+	glm::vec3 getPos() { return cameraPos; }
 
 	glm::mat4 getViewMatrix();
 

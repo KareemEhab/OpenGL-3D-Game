@@ -31,5 +31,7 @@ public:
     void setBool(const std::string& name, bool value) { glUniform1i(glGetUniformLocation(id, name.c_str()), (int)value); }
     void setInt(const string& name, int value) { glUniform1i(glGetUniformLocation(id, name.c_str()), value); }
     void setFloat(const std::string& name, float value){ glUniform1f(glGetUniformLocation(id, name.c_str()), value); }
+	void set3Float(const std::string& name, glm::vec3 value) { set3Float(name, value.x, value.y, value.z); }
+	void set3Float(const std::string& name, float x, float y, float z) { glUniform3f(glGetUniformLocation(id, name.c_str()), x, y, z); }
 };
 
