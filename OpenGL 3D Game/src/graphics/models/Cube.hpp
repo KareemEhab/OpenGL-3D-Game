@@ -11,6 +11,8 @@ public:
 	glm::vec3 size;
     Material material;
 
+    Cube() {}
+
 	Cube(Material material, glm::vec3 pos, glm::vec3 size)
 		: material(material), pos(pos), size(size) {}
 
@@ -66,24 +68,22 @@ public:
 		for (unsigned int i = 0; i < noVertices; i++)
 			indeces[i] = i;
 
-		Texture tex0("assets/image1.jpg", "texture0");
-		tex0.load();
-		Texture tex1("assets/image2.png", "texture1");
-		tex1.load();
+		Texture tex("assets/image1.jpg", "material.diffuse");
+		tex.load();
 
-		meshes.push_back(Mesh(Vertex::genList(vertices, noVertices), indeces, { tex0, tex1 }));
+		meshes.push_back(Mesh(Vertex::genList(vertices, noVertices), indeces, { tex }));
 	}
 
 	void render(Shader shader)
 	{
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, pos);
-		model = glm::rotate(model, (float)glfwGetTime() * glm::radians(-55.0f), glm::vec3(0.5f));
+		//model = glm::rotate(model, (float)glfwGetTime() * glm::radians(-55.0f), glm::vec3(0.5f));
 		model = glm::scale(model, size);
 		shader.setMat4("model", model);
 
         shader.set3Float("material.ambient", material.ambient);
-        shader.set3Float("material.diffuse", material.diffuse);
+        //shader.set3Float("material.diffuse", material.diffuse);
         shader.set3Float("material.specular", material.specular);
         shader.setFloat("material.shininess", material.shininess);
 

@@ -24,6 +24,9 @@ public:
 
 	float getZoom() { return zoom; }
 	glm::vec3 getPos() { return cameraPos; }
+	glm::vec3 getFront() { return cameraFront; }
+	glm::vec3 getUp() { return cameraUp; }
+	glm::vec3 getRight() { return cameraRight; }
 
 	glm::mat4 getViewMatrix();
 

@@ -12,8 +12,11 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <assimp/anim.h>
+
 #include "graphics/Shader.h"
 #include "graphics/Texture.h"
+#include "graphics/Light.h"
 
 #include "graphics/models/Cube.hpp"
 #include "graphics/models/Lamp.hpp"
@@ -37,6 +40,8 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+bool flashLightIsOn = true;
 
 int main()
 {
@@ -66,11 +71,59 @@ int main()
 	Shader lampShader("assets/object.vs", "assets/lamp.fs");
 
 	// Models
-	Cube cube(Material::gold, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(1.0f));
-	cube.init();
+	glm::vec3 cubePositions[] = {
+		glm::vec3(0.0f,  0.0f,  0.0f),
+		glm::vec3(2.0f,  5.0f, -15.0f),
+		glm::vec3(-1.5f, -2.2f, -2.5f),
+		glm::vec3(-3.8f, -2.0f, -12.3f),
+		glm::vec3(2.4f, -0.4f, -3.5f),
+		glm::vec3(-1.7f,  3.0f, -7.5f),
+		glm::vec3(1.3f, -2.0f, -2.5f),
+		glm::vec3(1.5f,  2.0f, -2.5f),
+		glm::vec3(1.5f,  0.2f, -1.5f),
+		glm::vec3(-1.3f,  1.0f, -1.5f)
+	};
 
-	Lamp lamp(glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(-1.0f, -0.5f, -0.5f), glm::vec3(0.25f));
-	lamp.init();
+	Cube cubes[10];
+	for (unsigned int i = 0; i < 10; i++) {
+		cubes[i] = Cube(Material::gold, cubePositions[i], glm::vec3(1.0f));
+		cubes[i].init();
+	}
+
+	glm::vec3 pointLightPositions[] = {
+			glm::vec3(0.7f,  0.2f,  2.0f),
+			glm::vec3(2.3f, -3.3f, -4.0f),
+			glm::vec3(-4.0f,  2.0f, -12.0f),
+			glm::vec3(0.0f,  0.0f, -3.0f)
+	};
+	Lamp lamps[4];
+	for (unsigned int i = 0; i < 4; i++) {
+		lamps[i] = Lamp(glm::vec3(1.0f),
+			glm::vec3(0.05f), glm::vec3(0.8f), glm::vec3(1.0f),
+			1.0f, 0.07f, 0.032f,
+			pointLightPositions[i], glm::vec3(0.25f));
+		lamps[i].init();
+	}
+
+	//Cube cube(Material::gold, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(1.0f));
+	//cube.init();
+
+	DirLight dirLight = { glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(0.75f) };
+
+
+	//Lamp lamp(glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(1.0f), 1.0f, 0.07f, 0.032f, glm::vec3(-1.0f, -0.5f, -0.5f), glm::vec3(0.25f));
+	//lamp.init();
+
+	SpotLight spotLight = {
+		camera.getPos(),
+		camera.getFront(),
+		glm::cos(glm::radians(12.5f)),
+		glm::cos(glm::radians(20.0f)),
+		1.0f, 0.07f, 0.032f,
+		glm::vec3(0.1f),
+		glm::vec3(1.0f),
+		glm::vec3(1.0f)
+	}; // Using camera as spotlight
 
 	// Joystick
 	mainJ.update();
@@ -95,11 +148,24 @@ int main()
 		screen.update();
 		shader.activate();
 
-		shader.set3Float("light.position", lamp.pos);
 		shader.set3Float("viewPos", camera.getPos());
-		shader.set3Float("light.ambient", lamp.ambient);
-		shader.set3Float("light.diffuse", lamp.diffuse);
-		shader.set3Float("light.specular", lamp.specular);
+
+		dirLight.render(shader);
+		
+		for (int i = 0; i < 4; i++)
+			lamps[i].pointLight.render(shader, i);
+		shader.setInt("noPointLights", 4);
+
+		// Spotlight
+		if (flashLightIsOn)
+		{
+			spotLight.position = camera.getPos();
+			spotLight.direction = camera.getFront();
+			spotLight.render(shader, 0);
+			shader.setInt("noSpotLights", 1);
+		}
+		else
+			shader.setInt("noSpotLights", 0);
 
 		// Draw
 		glm::mat4 view = glm::mat4(1.0f);
@@ -112,19 +178,26 @@ int main()
 		shader.setMat4("view", view);
 		shader.setMat4("projection", projection);
 
-		cube.render(shader);
+		// Draw cubes
+		for (int i = 0; i < 10; i++)
+			cubes[i].render(shader);
 
+		// Lamps
 		lampShader.activate();
 		lampShader.setMat4("view", view);
 		lampShader.setMat4("projection", projection);
-		lamp.render(lampShader);
+		// Draw Lamps
+		for(int i = 0; i < 4; i++)
+			lamps[i].render(lampShader);
 
 		// Send new frame to window
 		screen.newFrame();
 	}
 
-	cube.cleanup();
-	lamp.cleanup();
+	for (int i = 0; i < 10; i++)
+		cubes[i].cleanup();
+	for (int i = 0; i < 4; i++)
+		lamps[i].cleanup();
 
 	glfwTerminate();
 	return 0;
@@ -149,6 +222,9 @@ void processInput(double deltaTime)
 		camera.updateCameraPos(CameraDirection::UP, deltaTime);
 	if (Keyboard::key(GLFW_KEY_LEFT_CONTROL))
 		camera.updateCameraPos(CameraDirection::DOWN, deltaTime);
+
+	if (Keyboard::keyDown(GLFW_KEY_L))
+		flashLightIsOn = !flashLightIsOn;
 
 	double dx = Mouse::getDX(), dy = Mouse::getDY();
 	if (dx != 0 || dy != 0)
