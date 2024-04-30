@@ -6,6 +6,8 @@
 #include <sstream>
 #include <iostream>
 
+#include <assimp/scene.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -33,5 +35,8 @@ public:
     void setFloat(const std::string& name, float value){ glUniform1f(glGetUniformLocation(id, name.c_str()), value); }
 	void set3Float(const std::string& name, glm::vec3 value) { set3Float(name, value.x, value.y, value.z); }
 	void set3Float(const std::string& name, float x, float y, float z) { glUniform3f(glGetUniformLocation(id, name.c_str()), x, y, z); }
+	void set4Float(const std::string& name, float v1, float v2, float v3, float v4) { glUniform4f(glGetUniformLocation(id, name.c_str()), v1, v2, v3, v4); }
+	void set4Float(const std::string& name, aiColor4D color) { glUniform4f(glGetUniformLocation(id, name.c_str()), color.r, color.g, color.b, color.a); }
+	void set4Float(const std::string& name, glm::vec4 v) { glUniform4f(glGetUniformLocation(id, name.c_str()), v.x, v.y, v.z, v.w); }
 };
 

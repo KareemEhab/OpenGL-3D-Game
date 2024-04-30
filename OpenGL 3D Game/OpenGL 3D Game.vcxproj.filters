@@ -63,6 +63,14 @@
     <None Include="assets\object.fs" />
     <None Include="assets\object2.fs" />
     <None Include="assets\lamp.fs" />
+    <None Include="assets\models\lotr_troll\scene.gltf" />
+    <None Include="assets\models\lotr_troll\scene.bin">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="assets\models\m4a1\scene.bin">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="assets\models\m4a1\scene.gltf" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\graphics\Shader.h">
@@ -104,5 +112,41 @@
     <ClInclude Include="src\graphics\Light.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="assets\models\lotr_troll\textures\TEX_pants_baseColor.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\models\lotr_troll\textures\TEX_pants_metallicRoughness.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\models\lotr_troll\textures\TEX_pants_normal.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\models\lotr_troll\textures\TEX_Troll_baseColor.jpeg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\models\lotr_troll\textures\TEX_Troll_emissive.jpeg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\models\lotr_troll\textures\TEX_Troll_metallicRoughness.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\models\lotr_troll\textures\TEX_Troll_normal.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\image1.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\image2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\image3.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="assets\models\lotr_troll\license.txt" />
+    <Text Include="assets\models\m4a1\license.txt" />
   </ItemGroup>
 </Project>

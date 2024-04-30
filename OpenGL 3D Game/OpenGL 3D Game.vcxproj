@@ -168,6 +168,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\lamp.fs" />
+    <None Include="assets\models\lotr_troll\scene.bin" />
+    <None Include="assets\models\lotr_troll\scene.gltf" />
+    <None Include="assets\models\m4a1\scene.bin" />
+    <None Include="assets\models\m4a1\scene.gltf" />
     <None Include="assets\object.fs" />
     <None Include="assets\object2.fs" />
     <None Include="assets\object.vs" />
@@ -186,6 +190,22 @@
     <ClInclude Include="src\io\Mouse.h" />
     <ClInclude Include="src\graphics\Shader.h" />
     <ClInclude Include="src\graphics\Texture.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="assets\image1.jpg" />
+    <Image Include="assets\image2.png" />
+    <Image Include="assets\image3.png" />
+    <Image Include="assets\models\lotr_troll\textures\TEX_pants_baseColor.png" />
+    <Image Include="assets\models\lotr_troll\textures\TEX_pants_metallicRoughness.png" />
+    <Image Include="assets\models\lotr_troll\textures\TEX_pants_normal.png" />
+    <Image Include="assets\models\lotr_troll\textures\TEX_Troll_baseColor.jpeg" />
+    <Image Include="assets\models\lotr_troll\textures\TEX_Troll_emissive.jpeg" />
+    <Image Include="assets\models\lotr_troll\textures\TEX_Troll_metallicRoughness.png" />
+    <Image Include="assets\models\lotr_troll\textures\TEX_Troll_normal.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="assets\models\lotr_troll\license.txt" />
+    <Text Include="assets\models\m4a1\license.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -17,6 +17,7 @@
 #include "graphics/Shader.h"
 #include "graphics/Texture.h"
 #include "graphics/Light.h"
+#include "graphics/Model.h"
 
 #include "graphics/models/Cube.hpp"
 #include "graphics/models/Lamp.hpp"
@@ -36,7 +37,7 @@ Joystick mainJ(0);
 unsigned int SCREEN_W = 800, SCREEN_H = 600;
 
 Screen screen;
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, 0.0f));
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -71,6 +72,9 @@ int main()
 	Shader lampShader("assets/object.vs", "assets/lamp.fs");
 
 	// Models
+	Model m(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.05f), true);
+	m.loadModel("assets/models/m4a1/scene.gltf");
+
 	glm::vec3 cubePositions[] = {
 		glm::vec3(0.0f,  0.0f,  0.0f),
 		glm::vec3(2.0f,  5.0f, -15.0f),
@@ -86,9 +90,16 @@ int main()
 
 	Cube cubes[10];
 	for (unsigned int i = 0; i < 10; i++) {
-		cubes[i] = Cube(Material::gold, cubePositions[i], glm::vec3(1.0f));
+		cubes[i] = Cube(cubePositions[i], glm::vec3(1.0f));
 		cubes[i].init();
 	}
+
+	DirLight dirLight = { 
+		glm::vec3(-0.2f, -1.0f, -0.3f), 
+		glm::vec4(0.1f, 0.1f, 0.1f, 1.0f), 
+		glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 
+		glm::vec4(0.75f, 0.75f, 0.75f, 1.0f) 
+	};
 
 	glm::vec3 pointLightPositions[] = {
 			glm::vec3(0.7f,  0.2f,  2.0f),
@@ -99,7 +110,9 @@ int main()
 	Lamp lamps[4];
 	for (unsigned int i = 0; i < 4; i++) {
 		lamps[i] = Lamp(glm::vec3(1.0f),
-			glm::vec3(0.05f), glm::vec3(0.8f), glm::vec3(1.0f),
+			glm::vec4(0.05f, 0.05f, 0.05f, 1.0f), 
+			glm::vec4(0.8f, 0.8f, 0.8f, 1.0f),
+			glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
 			1.0f, 0.07f, 0.032f,
 			pointLightPositions[i], glm::vec3(0.25f));
 		lamps[i].init();
@@ -107,9 +120,6 @@ int main()
 
 	//Cube cube(Material::gold, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(1.0f));
 	//cube.init();
-
-	DirLight dirLight = { glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(0.75f) };
-
 
 	//Lamp lamp(glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(1.0f), 1.0f, 0.07f, 0.032f, glm::vec3(-1.0f, -0.5f, -0.5f), glm::vec3(0.25f));
 	//lamp.init();
@@ -120,9 +130,9 @@ int main()
 		glm::cos(glm::radians(12.5f)),
 		glm::cos(glm::radians(20.0f)),
 		1.0f, 0.07f, 0.032f,
-		glm::vec3(0.1f),
-		glm::vec3(1.0f),
-		glm::vec3(1.0f)
+		glm::vec4(0.1f, 0.1f, 0.1f, 1.0f),
+		glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
+		glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
 	}; // Using camera as spotlight
 
 	// Joystick
@@ -181,6 +191,9 @@ int main()
 		// Draw cubes
 		for (int i = 0; i < 10; i++)
 			cubes[i].render(shader);
+		
+		// Draw model
+		m.render(shader);
 
 		// Lamps
 		lampShader.activate();
@@ -196,6 +209,7 @@ int main()
 
 	for (int i = 0; i < 10; i++)
 		cubes[i].cleanup();
+	m.cleanup();
 	for (int i = 0; i < 4; i++)
 		lamps[i].cleanup();
 

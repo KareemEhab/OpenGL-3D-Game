@@ -26,9 +26,12 @@ public:
 	unsigned int VAO;
 
 	vector<Texture> textures;
+	aiColor4D diffuse;
+	aiColor4D specular;
 
 	Mesh();
-	Mesh(vector<Vertex> vertices, vector<unsigned int> indeces, vector<Texture> textures);
+	Mesh(vector<Vertex> vertices, vector<unsigned int> indeces, vector<Texture> textures = {});
+	Mesh(vector<Vertex> vertices, vector<unsigned int> indeces, aiColor4D diffuse, aiColor4D specular);
 
 	void render(Shader shader);
 
@@ -36,6 +39,7 @@ public:
 	
 private:
 	unsigned int VBO, EBO;
+	bool noTex;
 	void setup();
 };
 
