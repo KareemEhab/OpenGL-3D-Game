@@ -1,3 +1,6 @@
+#ifndef MODELARRAY_H
+#define MODELARRAY_H
+
 #include "../Model.h"
 
 template<class T>
@@ -34,3 +37,5 @@ public:
 protected:
 	T model;
 };
+
+#endif

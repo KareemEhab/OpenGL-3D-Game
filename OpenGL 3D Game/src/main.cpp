@@ -7,6 +7,8 @@
 #include <sstream>
 #include <streambuf>
 #include <string>
+#include <vector>
+#include <stack>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -116,15 +118,32 @@ int main()
 			glm::vec3(-4.0f,  2.0f, -12.0f),
 			glm::vec3(0.0f,  0.0f, -3.0f)
 	};
-	Lamp lamps[4];
+
+	glm::vec4 ambient = glm::vec4(0.05f, 0.05f, 0.05f, 1.0f);
+	glm::vec4 diffuse = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
+	glm::vec4 specular = glm::vec4(1.0f);
+	float k0 = 1.0f;
+	float k1 = 0.09f;
+	float k2 = 0.032f;
+
+	/*Lamp lamps[4];
 	for (unsigned int i = 0; i < 4; i++) {
 		lamps[i] = Lamp(glm::vec3(1.0f),
-			glm::vec4(0.05f, 0.05f, 0.05f, 1.0f), 
-			glm::vec4(0.8f, 0.8f, 0.8f, 1.0f),
-			glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
-			1.0f, 0.07f, 0.032f,
+			ambient, diffuse, specular,
+			k0, k1, k2,
 			pointLightPositions[i], glm::vec3(0.25f));
 		lamps[i].init();
+	}*/
+
+	LampArray lamps;
+	lamps.init();
+	for (unsigned int i = 0; i < 4; i++)
+	{
+		lamps.lightInstances.push_back({
+			pointLightPositions[i],
+			k0, k1, k2,
+			ambient, diffuse, specular
+			});
 	}
 
 	//Cube cube(Material::gold, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(1.0f));
@@ -156,7 +175,7 @@ int main()
 	while (!screen.shouldClose())
 	{
 		// Calculate Delta time
-		double currentTime = glfwGetTime();
+		float currentTime = glfwGetTime();
 		deltaTime = currentTime - lastFrame;
 		lastFrame = currentTime;
 
@@ -172,7 +191,7 @@ int main()
 		dirLight.render(shader);
 		
 		for (int i = 0; i < 4; i++)
-			lamps[i].pointLight.render(shader, i);
+			lamps.lightInstances[i].render(shader, i);
 		shader.setInt("noPointLights", 4);
 
 		// Spotlight
@@ -197,6 +216,22 @@ int main()
 		shader.setMat4("view", view);
 		shader.setMat4("projection", projection);
 
+		// Memory optimization
+		stack<int> removeObjects;
+		for (int i = 0; i < bullets.instances.size(); i++)
+		{
+			if (glm::length(Camera::defaultCamera.getPos() - bullets.instances[i].pos) > 300.0f)
+			{
+				removeObjects.push(i);
+				continue;
+			}
+		}
+		for (int i = 0; i < removeObjects.size(); i++)
+		{
+			bullets.instances.erase(bullets.instances.begin() + removeObjects.top());
+			removeObjects.pop();
+		}
+
 		// Draw cubes
 		for (int i = 0; i < 10; i++)
 			cubes[i].render(shader, deltaTime);
@@ -213,8 +248,7 @@ int main()
 		lampShader.setMat4("view", view);
 		lampShader.setMat4("projection", projection);
 		// Draw Lamps
-		for(int i = 0; i < 4; i++)
-			lamps[i].render(lampShader, deltaTime);
+		lamps.render(lampShader, deltaTime);
 
 		// Send new frame to window
 		screen.newFrame();
@@ -224,8 +258,7 @@ int main()
 		cubes[i].cleanup();
 	gun.cleanup();
 	bullets.cleanup();
-	for (int i = 0; i < 4; i++)
-		lamps[i].cleanup();
+	//lamps.cleanup();
 
 	glfwTerminate();
 	return 0;
