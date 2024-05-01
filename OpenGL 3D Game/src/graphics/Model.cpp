@@ -10,13 +10,16 @@ Model::Model(glm::vec3 pos, glm::vec3 size, bool noTex)
 }
 
 
-void Model::render(Shader shader)
+void Model::render(Shader shader, bool setModel)
 {
-	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, pos);
-	model = glm::scale(model, size);
-	shader.setMat4("model", model);
-
+	if (setModel)
+	{
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, pos);
+		model = glm::scale(model, size);
+		shader.setMat4("model", model);
+	}
+	
 	shader.setFloat("material.shininess", 0.5f);
 
 	for (Mesh mesh : meshes)

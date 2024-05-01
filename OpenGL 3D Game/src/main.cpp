@@ -21,6 +21,7 @@
 
 #include "graphics/models/Cube.hpp"
 #include "graphics/models/Lamp.hpp"
+#include "graphics/models/Gun.hpp"
 
 #include "io/Keyboard.h"
 #include "io/Mouse.h"
@@ -37,7 +38,7 @@ Joystick mainJ(0);
 unsigned int SCREEN_W = 800, SCREEN_H = 600;
 
 Screen screen;
-Camera camera(glm::vec3(0.0f, 0.0f, 0.0f));
+Camera Camera::defaultCamera(glm::vec3(0.0f, 0.0f, 0.0f));
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -72,8 +73,8 @@ int main()
 	Shader lampShader("assets/object.vs", "assets/lamp.fs");
 
 	// Models
-	Model m(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.05f), true);
-	m.loadModel("assets/models/m4a1/scene.gltf");
+	Gun gun;
+	gun.loadModel("assets/models/m4a1/scene.gltf");
 
 	glm::vec3 cubePositions[] = {
 		glm::vec3(0.0f,  0.0f,  0.0f),
@@ -125,8 +126,8 @@ int main()
 	//lamp.init();
 
 	SpotLight spotLight = {
-		camera.getPos(),
-		camera.getFront(),
+		Camera::defaultCamera.getPos(),
+		Camera::defaultCamera.getFront(),
 		glm::cos(glm::radians(12.5f)),
 		glm::cos(glm::radians(20.0f)),
 		1.0f, 0.07f, 0.032f,
@@ -158,7 +159,7 @@ int main()
 		screen.update();
 		shader.activate();
 
-		shader.set3Float("viewPos", camera.getPos());
+		shader.set3Float("viewPos", Camera::defaultCamera.getPos());
 
 		dirLight.render(shader);
 		
@@ -169,8 +170,8 @@ int main()
 		// Spotlight
 		if (flashLightIsOn)
 		{
-			spotLight.position = camera.getPos();
-			spotLight.direction = camera.getFront();
+			spotLight.position = Camera::defaultCamera.getPos();
+			spotLight.direction = Camera::defaultCamera.getFront();
 			spotLight.render(shader, 0);
 			shader.setInt("noSpotLights", 1);
 		}
@@ -181,8 +182,8 @@ int main()
 		glm::mat4 view = glm::mat4(1.0f);
 		glm::mat4 projection = glm::mat4(1.0f);
 
-		view = camera.getViewMatrix();
-		projection = glm::perspective(glm::radians(camera.getZoom()), (float)SCREEN_W / (float)SCREEN_H, 0.1f, 100.0f);
+		view = Camera::defaultCamera.getViewMatrix();
+		projection = glm::perspective(glm::radians(Camera::defaultCamera.getZoom()), (float)SCREEN_W / (float)SCREEN_H, 0.1f, 100.0f);
 
 		// Set uniform variables
 		shader.setMat4("view", view);
@@ -192,8 +193,8 @@ int main()
 		for (int i = 0; i < 10; i++)
 			cubes[i].render(shader);
 		
-		// Draw model
-		m.render(shader);
+		// Draw Gun
+		gun.render(shader);
 
 		// Lamps
 		lampShader.activate();
@@ -209,7 +210,7 @@ int main()
 
 	for (int i = 0; i < 10; i++)
 		cubes[i].cleanup();
-	m.cleanup();
+	gun.cleanup();
 	for (int i = 0; i < 4; i++)
 		lamps[i].cleanup();
 
@@ -225,28 +226,28 @@ void processInput(double deltaTime)
 
 	// Move camera
 	if (Keyboard::key(GLFW_KEY_W))
-		camera.updateCameraPos(CameraDirection::FORWARD, deltaTime);
+		Camera::defaultCamera.updateCameraPos(CameraDirection::FORWARD, deltaTime);
 	if (Keyboard::key(GLFW_KEY_S))
-		camera.updateCameraPos(CameraDirection::BACKWARD, deltaTime);
+		Camera::defaultCamera.updateCameraPos(CameraDirection::BACKWARD, deltaTime);
 	if (Keyboard::key(GLFW_KEY_A))
-		camera.updateCameraPos(CameraDirection::LEFT, deltaTime);
+		Camera::defaultCamera.updateCameraPos(CameraDirection::LEFT, deltaTime);
 	if (Keyboard::key(GLFW_KEY_D))
-		camera.updateCameraPos(CameraDirection::RIGHT, deltaTime);
+		Camera::defaultCamera.updateCameraPos(CameraDirection::RIGHT, deltaTime);
 	if (Keyboard::key(GLFW_KEY_SPACE))
-		camera.updateCameraPos(CameraDirection::UP, deltaTime);
+		Camera::defaultCamera.updateCameraPos(CameraDirection::UP, deltaTime);
 	if (Keyboard::key(GLFW_KEY_LEFT_CONTROL))
-		camera.updateCameraPos(CameraDirection::DOWN, deltaTime);
+		Camera::defaultCamera.updateCameraPos(CameraDirection::DOWN, deltaTime);
 
 	if (Keyboard::keyDown(GLFW_KEY_L))
 		flashLightIsOn = !flashLightIsOn;
 
 	double dx = Mouse::getDX(), dy = Mouse::getDY();
 	if (dx != 0 || dy != 0)
-		camera.updateCameraDirection(dx, dy);
+		Camera::defaultCamera.updateCameraDirection(dx, dy);
 
 	double scrollDy = Mouse::getScrollDY();
 	if(scrollDy != 0)
-		camera.updateCameraZoom(scrollDy);
+		Camera::defaultCamera.updateCameraZoom(scrollDy);
 
 	// Joystick example
 	/*mainJ.update();

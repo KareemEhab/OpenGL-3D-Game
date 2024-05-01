@@ -16,6 +16,7 @@ enum class CameraDirection {
 class Camera
 {
 public:
+	static Camera defaultCamera;
 	Camera(glm::vec3 position);
 
 	void updateCameraDirection(double dx, double dy);
