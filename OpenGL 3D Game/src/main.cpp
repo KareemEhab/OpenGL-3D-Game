@@ -268,7 +268,8 @@ void launchItem(float deltaTime)
 {
 	RigidBody rb(1.0f, Camera::defaultCamera.getPos());
 	rb.applyAcceleration(Environment::gravitationalAcceleration);
-	rb.applyImpluse(Camera::defaultCamera.getFront(), 5000.0f, deltaTime);
+	rb.transferEnergy(100.f, Camera::defaultCamera.getFront());
+	//rb.applyImpluse(Camera::defaultCamera.getFront(), 5000.0f, deltaTime);
 	bullets.instances.push_back(rb);
 }
 

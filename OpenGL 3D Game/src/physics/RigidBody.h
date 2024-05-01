@@ -22,5 +22,5 @@ public:
 	void applyImpluse(glm::vec3 force, float dt);
 	void applyImpluse(glm::vec3 direction, float magnitude, float dt);
 
-	void transferEnergy(float joules);
+	void transferEnergy(float joules, glm::vec3 direction);
 };

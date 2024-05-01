@@ -39,13 +39,13 @@ void RigidBody::applyImpluse(glm::vec3 direction, float magnitude, float dt)
 	applyImpluse(direction * magnitude, dt);
 }
 
-void RigidBody::transferEnergy(float joules)
+void RigidBody::transferEnergy(float joules, glm::vec3 direction)
 {
 	if (joules == 0)
 		return;
 
 	// Comes formula KE = 1/2 * m * v^2
-	float deltaV = sqrt(2 * abs(joules) / mass);
+	glm::vec3 deltaV = sqrt(2 * abs(joules) / mass) * direction;
 
 	velocity += joules > 0 ? deltaV : -deltaV;
 }
