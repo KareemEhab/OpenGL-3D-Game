@@ -28,6 +28,7 @@ public:
 	glm::vec3 getFront() { return cameraFront; }
 	glm::vec3 getUp() { return cameraUp; }
 	glm::vec3 getRight() { return cameraRight; }
+	glm::vec3 getWorldUp() { return worldUp; }
 
 	glm::mat4 getViewMatrix();
 
