@@ -57,6 +57,12 @@
     <ClCompile Include="src\graphics\Light.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\physics\RigidBody.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\Environment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\object.vs" />
@@ -113,6 +119,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\models\Gun.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\models\Sphere.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\RigidBody.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\Environment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\models\ModelArray.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

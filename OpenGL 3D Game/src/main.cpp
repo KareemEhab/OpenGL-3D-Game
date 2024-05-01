@@ -22,6 +22,7 @@
 #include "graphics/models/Cube.hpp"
 #include "graphics/models/Lamp.hpp"
 #include "graphics/models/Gun.hpp"
+#include "graphics/models/Sphere.hpp"
 
 #include "io/Keyboard.h"
 #include "io/Mouse.h"
@@ -29,9 +30,12 @@
 #include "io/Camera.h"
 #include "io/Screen.h"
 
+#include "physics/Environment.h"
+
 using namespace std;
 
-void processInput(double deltaTime);
+void processInput(float deltaTime);
+void launchItem(float deltaTime);
 
 Joystick mainJ(0);
 
@@ -44,6 +48,8 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 bool flashLightIsOn = true;
+
+SphereArray bullets;
 
 int main()
 {
@@ -75,6 +81,8 @@ int main()
 	// Models
 	Gun gun;
 	gun.loadModel("assets/models/m4a1/scene.gltf");
+
+	bullets.init();
 
 	glm::vec3 cubePositions[] = {
 		glm::vec3(0.0f,  0.0f,  0.0f),
@@ -191,10 +199,14 @@ int main()
 
 		// Draw cubes
 		for (int i = 0; i < 10; i++)
-			cubes[i].render(shader);
+			cubes[i].render(shader, deltaTime);
 		
 		// Draw Gun
-		gun.render(shader);
+		gun.render(shader, deltaTime);
+
+		// Draw Sphere
+		if (bullets.instances.size() > 0)
+			bullets.render(shader, deltaTime);
 
 		// Lamps
 		lampShader.activate();
@@ -202,7 +214,7 @@ int main()
 		lampShader.setMat4("projection", projection);
 		// Draw Lamps
 		for(int i = 0; i < 4; i++)
-			lamps[i].render(lampShader);
+			lamps[i].render(lampShader, deltaTime);
 
 		// Send new frame to window
 		screen.newFrame();
@@ -211,6 +223,7 @@ int main()
 	for (int i = 0; i < 10; i++)
 		cubes[i].cleanup();
 	gun.cleanup();
+	bullets.cleanup();
 	for (int i = 0; i < 4; i++)
 		lamps[i].cleanup();
 
@@ -218,8 +231,16 @@ int main()
 	return 0;
 }
 
+void launchItem(float deltaTime)
+{
+	RigidBody rb(1.0f, Camera::defaultCamera.getPos());
+	rb.applyAcceleration(Environment::gravitationalAcceleration);
+	rb.applyImpluse(Camera::defaultCamera.getFront(), 5000.0f, deltaTime);
+	bullets.instances.push_back(rb);
+}
+
 // Inputs
-void processInput(double deltaTime)
+void processInput(float deltaTime)
 {
 	if (Keyboard::key(GLFW_KEY_ESCAPE) || mainJ.buttonState(GLFW_JOYSTICK_BTN_RIGHT))
 		screen.setShouldClose(true);
@@ -248,6 +269,11 @@ void processInput(double deltaTime)
 	double scrollDy = Mouse::getScrollDY();
 	if(scrollDy != 0)
 		Camera::defaultCamera.updateCameraZoom(scrollDy);
+
+	if (Mouse::buttonDown(GLFW_MOUSE_BUTTON_1))
+	{
+		launchItem(deltaTime);
+	}
 
 	// Joystick example
 	/*mainJ.update();

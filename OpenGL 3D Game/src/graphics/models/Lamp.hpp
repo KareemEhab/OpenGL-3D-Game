@@ -27,12 +27,12 @@ public:
 		Cube(pos, size){ }
 
 	// Override
-	void render(Shader shader)
+	void render(Shader shader, float dt)
 	{
 		// Set light color
 		shader.set3Float("lightColor", lightColor);
 
-		Cube::render(shader);
+		Cube::render(shader, dt);
 	}
 };
 

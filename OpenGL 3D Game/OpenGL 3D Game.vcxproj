@@ -151,6 +151,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\physics\Environment.cpp" />
+    <ClCompile Include="src\physics\RigidBody.cpp" />
     <ClCompile Include="src\graphics\Light.cpp" />
     <ClCompile Include="src\graphics\Material.cpp" />
     <ClCompile Include="src\graphics\Mesh.cpp" />
@@ -177,6 +179,9 @@
     <None Include="assets\object.vs" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\models\ModelArray.hpp" />
+    <ClInclude Include="src\physics\Environment.h" />
+    <ClInclude Include="src\physics\RigidBody.h" />
     <ClInclude Include="src\graphics\Light.h" />
     <ClInclude Include="src\graphics\Material.h" />
     <ClInclude Include="src\graphics\Mesh.h" />
@@ -184,6 +189,7 @@
     <ClInclude Include="src\graphics\models\Cube.hpp" />
     <ClInclude Include="src\graphics\models\Gun.hpp" />
     <ClInclude Include="src\graphics\models\Lamp.hpp" />
+    <ClInclude Include="src\graphics\models\Sphere.hpp" />
     <ClInclude Include="src\io\Screen.h" />
     <ClInclude Include="src\io\Camera.h" />
     <ClInclude Include="src\io\Joystick.h" />

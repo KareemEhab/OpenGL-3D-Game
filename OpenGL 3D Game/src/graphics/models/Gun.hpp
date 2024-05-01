@@ -8,15 +8,15 @@ public:
 	Gun()
 		: Model(glm::vec3(0.0f), glm::vec3(1 / 300.0f), true) { }
 
-	void render(Shader shader, bool setModel = false)
+	void render(Shader shader, float dt, bool setModel = false)
 	{
 		// Set position
 		glm::mat4 model = glm::mat4(1.0f);
-		pos = Camera::defaultCamera.getPos() 
+		rb.pos = Camera::defaultCamera.getPos() 
 			+ glm::vec3(Camera::defaultCamera.getFront() * 0.25f) 
 			+ glm::vec3(Camera::defaultCamera.getUp() * -0.08f) 
 			+ glm::vec3(Camera::defaultCamera.getRight() * 0.085f);
-		model = glm::translate(model, pos);
+		model = glm::translate(model, rb.pos);
 
 		float theta;
 
@@ -33,14 +33,9 @@ public:
 		theta = acos(glm::dot(glm::vec2(1.0f, 0.0f), front2d) / glm::length(front2d));
 		model = glm::rotate(model, Camera::defaultCamera.getFront().z < 0 ? theta : -theta, Camera::defaultCamera.getWorldUp());
 
-		if (Keyboard::key(GLFW_KEY_SPACE))
-		{
-
-		}
-
 		model = glm::scale(model, size);
 		shader.setMat4("model", model);
 
-		Model::render(shader, false);
+		Model::render(shader, dt, false);
 	}
 };
