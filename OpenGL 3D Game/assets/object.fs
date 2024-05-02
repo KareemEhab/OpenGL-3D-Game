@@ -74,7 +74,6 @@ void main()
 
 	vec4 diffMap;
 	vec4 specMap;
-	//vec3 specMap = vec3(texture(material.specular, TexCoord)); // That is if it's a texture passed like diffMap
 	
 	if(noTex == 1)
 	{
@@ -127,13 +126,11 @@ vec4 calcDirLight(vec3 norm, vec3 viewDir, vec4 diffMap, vec4 specMap)
 vec4 calcPointLight(int idx, vec3 norm, vec3 viewDir, vec4 diffMap, vec4 specMap)
 {
 	// Ambient
-	//vec3 ambient = pointLights[idx].ambient * material.ambient;
 	vec4 ambient = pointLights[idx].ambient * diffMap;
 
 	// Diffuse
 	vec3 lightDir = normalize(pointLights[idx].position - FragPos); // Get distance from fragment position to the light
 	float diff = max(dot(norm, lightDir), 0.0);
-	//vec3 diffuse = pointLights[idx].diffuse * (diff * material.diffuse); // That is if a material is passed not a texture
 	vec4 diffuse = pointLights[idx].diffuse * (diff * diffMap);
 
 	// Specular

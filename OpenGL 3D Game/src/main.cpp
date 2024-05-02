@@ -25,6 +25,7 @@
 #include "graphics/models/Lamp.hpp"
 #include "graphics/models/Gun.hpp"
 #include "graphics/models/Sphere.hpp"
+#include "graphics/models/Box.hpp"
 
 #include "io/Keyboard.h"
 #include "io/Mouse.h"
@@ -52,6 +53,7 @@ float lastFrame = 0.0f;
 bool flashLightIsOn = true;
 
 SphereArray bullets;
+Box box;
 
 int main()
 {
@@ -76,15 +78,18 @@ int main()
 	
 	screen.setParameters();
 
-	// Shaders
+	// Shaders==========================
 	Shader shader("assets/object.vs", "assets/object.fs");
 	Shader lampShader("assets/object.vs", "assets/lamp.fs");
+	Shader bulletShader("assets/instanced/instanced.vs", "assets/object.fs");
+	Shader boxShader("assets/instanced/box.vs", "assets/instanced/box.fs");
 
-	// Models
+	// Models==========================
 	Gun gun;
 	gun.loadModel("assets/models/m4a1/scene.gltf");
 
 	bullets.init();
+	box.init();
 
 	glm::vec3 cubePositions[] = {
 		glm::vec3(0.0f,  0.0f,  0.0f),
@@ -185,25 +190,47 @@ int main()
 		// Render
 		screen.update();
 		shader.activate();
-
 		shader.set3Float("viewPos", Camera::defaultCamera.getPos());
 
+		bulletShader.activate();
+		bulletShader.set3Float("viewPos", Camera::defaultCamera.getPos());
+
+		shader.activate();
 		dirLight.render(shader);
+		bulletShader.activate();
+		dirLight.render(bulletShader);
 		
 		for (int i = 0; i < 4; i++)
+		{
+			shader.activate();
 			lamps.lightInstances[i].render(shader, i);
+			bulletShader.activate();
+			lamps.lightInstances[i].render(bulletShader, i);
+		}
+		shader.activate();
 		shader.setInt("noPointLights", 4);
+		bulletShader.activate();
+		bulletShader.setInt("noPointLights", 4);
 
 		// Spotlight
 		if (flashLightIsOn)
 		{
 			spotLight.position = Camera::defaultCamera.getPos();
 			spotLight.direction = Camera::defaultCamera.getFront();
+			shader.activate();
 			spotLight.render(shader, 0);
 			shader.setInt("noSpotLights", 1);
+			bulletShader.activate();
+			spotLight.render(bulletShader, 0);
+			bulletShader.setInt("noSpotLights", 1);
 		}
 		else
+		{
+			shader.activate();
 			shader.setInt("noSpotLights", 0);
+			bulletShader.activate();
+			bulletShader.setInt("noSpotLights", 0);
+		}
 
 		// Draw
 		glm::mat4 view = glm::mat4(1.0f);
@@ -213,6 +240,7 @@ int main()
 		projection = glm::perspective(glm::radians(Camera::defaultCamera.getZoom()), (float)SCREEN_W / (float)SCREEN_H, 0.1f, 100.0f);
 
 		// Set uniform variables
+		shader.activate();
 		shader.setMat4("view", view);
 		shader.setMat4("projection", projection);
 
@@ -221,10 +249,7 @@ int main()
 		for (int i = 0; i < bullets.instances.size(); i++)
 		{
 			if (glm::length(Camera::defaultCamera.getPos() - bullets.instances[i].pos) > 300.0f)
-			{
 				removeObjects.push(i);
-				continue;
-			}
 		}
 		for (int i = 0; i < removeObjects.size(); i++)
 		{
@@ -237,11 +262,17 @@ int main()
 			cubes[i].render(shader, deltaTime);
 		
 		// Draw Gun
+		shader.activate();
 		gun.render(shader, deltaTime);
 
 		// Draw Sphere
+		bulletShader.activate();
 		if (bullets.instances.size() > 0)
-			bullets.render(shader, deltaTime);
+		{
+			bulletShader.setMat4("view", view);
+			bulletShader.setMat4("projection", projection);
+			bullets.render(bulletShader, deltaTime);
+		}
 
 		// Lamps
 		lampShader.activate();
@@ -249,6 +280,16 @@ int main()
 		lampShader.setMat4("projection", projection);
 		// Draw Lamps
 		lamps.render(lampShader, deltaTime);
+
+		// Draw boxes
+		if (box.offsets.size() > 0)
+		{
+			// Instances exist
+			boxShader.activate();
+			boxShader.setMat4("view", view);
+			boxShader.setMat4("projection", projection);
+			box.render(boxShader);
+		}
 
 		// Send new frame to window
 		screen.newFrame();
@@ -258,7 +299,8 @@ int main()
 		cubes[i].cleanup();
 	gun.cleanup();
 	bullets.cleanup();
-	//lamps.cleanup();
+	lamps.cleanup();
+	box.cleanup();
 
 	glfwTerminate();
 	return 0;
@@ -268,7 +310,7 @@ void launchItem(float deltaTime)
 {
 	RigidBody rb(1.0f, Camera::defaultCamera.getPos());
 	rb.applyAcceleration(Environment::gravitationalAcceleration);
-	rb.transferEnergy(100.f, Camera::defaultCamera.getFront());
+	rb.transferEnergy(5000.f, Camera::defaultCamera.getFront());
 	//rb.applyImpluse(Camera::defaultCamera.getFront(), 5000.0f, deltaTime);
 	bullets.instances.push_back(rb);
 }
@@ -295,6 +337,12 @@ void processInput(float deltaTime)
 
 	if (Keyboard::keyDown(GLFW_KEY_L))
 		flashLightIsOn = !flashLightIsOn;
+
+	if (Keyboard::keyDown(GLFW_KEY_I))
+	{
+		box.offsets.push_back(glm::vec3(box.offsets.size() * 1.0f));
+		box.sizes.push_back(glm::vec3(box.sizes.size() * 0.5f));
+	}
 
 	double dx = Mouse::getDX(), dy = Mouse::getDY();
 	if (dx != 0 || dy != 0)

@@ -33,7 +33,7 @@ public:
 	Mesh(vector<Vertex> vertices, vector<unsigned int> indeces, vector<Texture> textures = {});
 	Mesh(vector<Vertex> vertices, vector<unsigned int> indeces, aiColor4D diffuse, aiColor4D specular);
 
-	void render(Shader shader);
+	void render(Shader shader, bool doRender = true);
 
 	void cleanup();
 	

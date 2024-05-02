@@ -169,16 +169,19 @@
     <ClCompile Include="src\graphics\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="assets\instanced\box.vs" />
+    <None Include="assets\instanced\instanced.vs" />
     <None Include="assets\lamp.fs" />
     <None Include="assets\models\lotr_troll\scene.bin" />
     <None Include="assets\models\lotr_troll\scene.gltf" />
     <None Include="assets\models\m4a1\scene.bin" />
     <None Include="assets\models\m4a1\scene.gltf" />
     <None Include="assets\object.fs" />
-    <None Include="assets\object2.fs" />
+    <None Include="assets\instanced\box.fs" />
     <None Include="assets\object.vs" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\models\Box.hpp" />
     <ClInclude Include="src\graphics\models\ModelArray.hpp" />
     <ClInclude Include="src\physics\Environment.h" />
     <ClInclude Include="src\physics\RigidBody.h" />

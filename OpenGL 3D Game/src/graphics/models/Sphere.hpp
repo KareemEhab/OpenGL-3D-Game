@@ -19,7 +19,7 @@ class SphereArray : public ModelArray<Sphere>
 public:
 	void init()
 	{
-		model = Sphere(glm::vec3(0.0f), glm::vec3(0.1f));
-		model.init();
+		model = Sphere(glm::vec3(0.0f), glm::vec3(0.01f));
+		ModelArray::init();
 	}
 };

@@ -5,6 +5,9 @@ bool Keyboard::keysChanged[GLFW_KEY_LAST] = { 0 };
 
 void Keyboard::keyCallback(GLFWwindow* winodw, int key, int scancode, int action, int mods)
 {
+	if (key < 0)
+		return;
+
 	if (action != GLFW_RELEASE)
 	{
 		if (!keys[key]) {

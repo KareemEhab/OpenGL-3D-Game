@@ -67,7 +67,7 @@
   <ItemGroup>
     <None Include="assets\object.vs" />
     <None Include="assets\object.fs" />
-    <None Include="assets\object2.fs" />
+    <None Include="assets\instanced\box.fs" />
     <None Include="assets\lamp.fs" />
     <None Include="assets\models\lotr_troll\scene.gltf" />
     <None Include="assets\models\lotr_troll\scene.bin">
@@ -77,6 +77,8 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="assets\models\m4a1\scene.gltf" />
+    <None Include="assets\instanced\instanced.vs" />
+    <None Include="assets\instanced\box.vs" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\graphics\Shader.h">
@@ -131,6 +133,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\models\ModelArray.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\models\Box.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

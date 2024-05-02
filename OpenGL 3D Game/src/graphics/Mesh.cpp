@@ -46,7 +46,7 @@ Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indeces, aiColor4D diff
 	setup();
 }
 
-void Mesh::render(Shader shader)
+void Mesh::render(Shader shader, bool doRender)
 {
 	if (noTex)
 	{
@@ -83,11 +83,14 @@ void Mesh::render(Shader shader)
 		}
 	}
 
-	glBindVertexArray(VAO);
-	glDrawElements(GL_TRIANGLES, indeces.size(), GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
+	if (doRender)
+	{
+		glBindVertexArray(VAO);
+		glDrawElements(GL_TRIANGLES, indeces.size(), GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
 
-	glActiveTexture(GL_TEXTURE0);
+		glActiveTexture(GL_TEXTURE0);
+	}
 }
 
 void Mesh::cleanup()
