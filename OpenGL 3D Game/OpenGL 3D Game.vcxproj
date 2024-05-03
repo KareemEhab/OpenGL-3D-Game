@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\algorithms\Bound.cpp" />
     <ClCompile Include="src\physics\Environment.cpp" />
     <ClCompile Include="src\physics\RigidBody.cpp" />
     <ClCompile Include="src\graphics\Light.cpp" />
@@ -181,6 +182,7 @@
     <None Include="assets\object.vs" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\algorithms\Bound.h" />
     <ClInclude Include="src\graphics\models\Box.hpp" />
     <ClInclude Include="src\graphics\models\ModelArray.hpp" />
     <ClInclude Include="src\physics\Environment.h" />

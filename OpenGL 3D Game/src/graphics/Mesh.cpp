@@ -29,24 +29,19 @@ vector<Vertex> Vertex::genList(float* vertices, int noVertices)
 	return ret;
 }
 
-Mesh::Mesh()
-{
-
-}
-
-Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indeces, vector<Texture> textures)
-	: vertices(vertices), indeces(indeces), textures(textures), noTex(false)
+Mesh::Mesh(BoundingRegion br, vector<Vertex> vertices, vector<unsigned int> indeces, vector<Texture> textures)
+	: br(br), vertices(vertices), indeces(indeces), textures(textures), noTex(false)
 {
 	setup();
 }
 
-Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indeces, aiColor4D diffuse, aiColor4D specular)
-	: vertices(vertices), indeces(indeces), diffuse(diffuse), specular(specular), noTex(true)
+Mesh::Mesh(BoundingRegion br, vector<Vertex> vertices, vector<unsigned int> indeces, aiColor4D diffuse, aiColor4D specular)
+	: br(br), vertices(vertices), indeces(indeces), diffuse(diffuse), specular(specular), noTex(true)
 {
 	setup();
 }
 
-void Mesh::render(Shader shader, bool doRender)
+void Mesh::render(Shader shader, glm::vec3 pos, glm::vec3 size, Box* box, bool doRender)
 {
 	if (noTex)
 	{
@@ -56,6 +51,7 @@ void Mesh::render(Shader shader, bool doRender)
 		shader.setInt("noTex", 1);
 	}
 	else {
+		shader.setInt("noTex", 0);
 		// textures
 		unsigned int diffuseIdx = 0;
 		unsigned int specularIdx = 0;
@@ -85,6 +81,8 @@ void Mesh::render(Shader shader, bool doRender)
 
 	if (doRender)
 	{
+		box->addInstance(br, pos, size);
+
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, indeces.size(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);

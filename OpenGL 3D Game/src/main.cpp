@@ -53,7 +53,6 @@ float lastFrame = 0.0f;
 bool flashLightIsOn = true;
 
 SphereArray bullets;
-Box box;
 
 int main()
 {
@@ -88,7 +87,12 @@ int main()
 	Gun gun;
 	gun.loadModel("assets/models/m4a1/scene.gltf");
 
+	Model troll(BoundTypes::AABB, glm::vec3(0.0f), glm::vec3(0.1f), false);
+	troll.loadModel("assets/models/lotr_troll/scene.gltf");
+
 	bullets.init();
+
+	Box box;
 	box.init();
 
 	glm::vec3 cubePositions[] = {
@@ -179,6 +183,9 @@ int main()
 
 	while (!screen.shouldClose())
 	{
+		box.offsets.clear();
+		box.sizes.clear();
+
 		// Calculate Delta time
 		float currentTime = glfwGetTime();
 		deltaTime = currentTime - lastFrame;
@@ -259,11 +266,13 @@ int main()
 
 		// Draw cubes
 		for (int i = 0; i < 10; i++)
-			cubes[i].render(shader, deltaTime);
+			cubes[i].render(shader, deltaTime, &box);
 		
 		// Draw Gun
 		shader.activate();
-		gun.render(shader, deltaTime);
+
+		troll.render(shader, deltaTime, &box);
+		gun.render(shader, deltaTime, &box);
 
 		// Draw Sphere
 		bulletShader.activate();
@@ -271,7 +280,7 @@ int main()
 		{
 			bulletShader.setMat4("view", view);
 			bulletShader.setMat4("projection", projection);
-			bullets.render(bulletShader, deltaTime);
+			bullets.render(bulletShader, deltaTime, &box);
 		}
 
 		// Lamps
@@ -279,7 +288,7 @@ int main()
 		lampShader.setMat4("view", view);
 		lampShader.setMat4("projection", projection);
 		// Draw Lamps
-		lamps.render(lampShader, deltaTime);
+		lamps.render(lampShader, deltaTime, &box);
 
 		// Draw boxes
 		if (box.offsets.size() > 0)
@@ -337,12 +346,6 @@ void processInput(float deltaTime)
 
 	if (Keyboard::keyDown(GLFW_KEY_L))
 		flashLightIsOn = !flashLightIsOn;
-
-	if (Keyboard::keyDown(GLFW_KEY_I))
-	{
-		box.offsets.push_back(glm::vec3(box.offsets.size() * 1.0f));
-		box.sizes.push_back(glm::vec3(box.sizes.size() * 0.5f));
-	}
 
 	double dx = Mouse::getDX(), dy = Mouse::getDY();
 	if (dx != 0 || dy != 0)

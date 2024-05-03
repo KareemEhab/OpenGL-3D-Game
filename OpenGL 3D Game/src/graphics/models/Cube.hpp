@@ -12,7 +12,7 @@ public:
     Material material;
 
     Cube(glm::vec3 pos = glm::vec3(0.0f), glm::vec3 size = glm::vec3(1.0f))
-    : Model(pos, size){ }
+    : Model(BoundTypes::AABB, pos, size){ }
 
 	void init()
 	{
@@ -69,7 +69,9 @@ public:
 		/*Texture tex("/assets", "/image1.jpg", "material.diffuse");
 		tex.load();*/
 
-		meshes.push_back(Mesh(Vertex::genList(vertices, noVertices), indeces));
+        BoundingRegion br(glm::vec3(-0.5f), glm::vec3(0.5f));
+
+		meshes.push_back(Mesh(br, Vertex::genList(vertices, noVertices), indeces));
 	}
 };
 

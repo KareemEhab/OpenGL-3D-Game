@@ -9,6 +9,10 @@
 #include "Shader.h"
 #include "Texture.h"
 
+#include "models/Box.hpp"
+
+#include "../algorithms/Bound.h"
+
 struct Vertex
 {
 	glm::vec3 pos;
@@ -21,6 +25,8 @@ typedef struct Vertex Vertex;
 class Mesh
 {
 public:
+	BoundingRegion br;
+
 	vector<Vertex> vertices;
 	vector<unsigned int> indeces;
 	unsigned int VAO;
@@ -29,11 +35,10 @@ public:
 	aiColor4D diffuse;
 	aiColor4D specular;
 
-	Mesh();
-	Mesh(vector<Vertex> vertices, vector<unsigned int> indeces, vector<Texture> textures = {});
-	Mesh(vector<Vertex> vertices, vector<unsigned int> indeces, aiColor4D diffuse, aiColor4D specular);
+	Mesh(BoundingRegion br, vector<Vertex> vertices, vector<unsigned int> indeces, vector<Texture> textures = {});
+	Mesh(BoundingRegion br, vector<Vertex> vertices, vector<unsigned int> indeces, aiColor4D diffuse, aiColor4D specular);
 
-	void render(Shader shader, bool doRender = true);
+	void render(Shader shader, glm::vec3 pos, glm::vec3 size, Box *box, bool doRender = true);
 
 	void cleanup();
 	
