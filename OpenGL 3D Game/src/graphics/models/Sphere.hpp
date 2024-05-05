@@ -12,6 +12,9 @@ public:
 	}
 
 	void init() {
+		Texture tex("assets", "/image1.jpg", aiTextureType_DIFFUSE);
+		tex.load();
+		textures_loaded.push_back(tex);
 		loadModel("assets/models/sphere/scene.gltf");
 	}
 };

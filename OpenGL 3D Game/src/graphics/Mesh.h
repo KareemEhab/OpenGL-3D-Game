@@ -8,6 +8,7 @@
 
 #include "Shader.h"
 #include "Texture.h"
+#include "GLMemory.hpp"
 
 #include "models/Box.hpp"
 
@@ -29,7 +30,7 @@ public:
 
 	vector<Vertex> vertices;
 	vector<unsigned int> indeces;
-	unsigned int VAO;
+	ArrayObject VAO;
 
 	vector<Texture> textures;
 	aiColor4D diffuse;

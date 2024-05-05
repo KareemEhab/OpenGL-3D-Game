@@ -31,11 +31,18 @@
 #include "io/Mouse.h"
 #include "io/Joystick.h"
 #include "io/Camera.h"
-#include "io/Screen.h"
+
+#include "algorithms/States.hpp"
 
 #include "physics/Environment.h"
 
+#include "Scene.h"
+
 using namespace std;
+
+Scene scene;
+
+Camera cam(glm::vec3(0.0f));
 
 void processInput(float deltaTime);
 void launchItem(float deltaTime);
@@ -44,38 +51,24 @@ Joystick mainJ(0);
 
 unsigned int SCREEN_W = 800, SCREEN_H = 600;
 
-Screen screen;
-Camera Camera::defaultCamera(glm::vec3(0.0f, 0.0f, 0.0f));
-
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-
-bool flashLightIsOn = true;
 
 SphereArray bullets;
 
 int main()
 {
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	if (!screen.init())
+	scene = Scene(3, 3, "OpenGL Engine", 800, 600);
+	if (!scene.init())
 	{
-		cout << "Could not create window" << endl;
+		cout << "Could not initialize window" << endl;
 		glfwTerminate();
 		return -1;
 	}
 
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
-		cout << "Failed to initialize GLAD" << endl;
-		glfwTerminate();
-		return -1;
-	}
-	
-	screen.setParameters();
+	// Camera==========================
+	scene.cameras.push_back(&cam);
+	scene.activeCamera = 0;
 
 	// Shaders==========================
 	Shader shader("assets/object.vs", "assets/object.fs");
@@ -114,12 +107,15 @@ int main()
 		cubes[i].init();
 	}
 
+	// Lights=========================
+
 	DirLight dirLight = { 
 		glm::vec3(-0.2f, -1.0f, -0.3f), 
 		glm::vec4(0.1f, 0.1f, 0.1f, 1.0f), 
 		glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 
 		glm::vec4(0.75f, 0.75f, 0.75f, 1.0f) 
 	};
+	scene.dirLight = &dirLight;
 
 	glm::vec3 pointLightPositions[] = {
 			glm::vec3(0.7f,  0.2f,  2.0f),
@@ -135,35 +131,24 @@ int main()
 	float k1 = 0.09f;
 	float k2 = 0.032f;
 
-	/*Lamp lamps[4];
-	for (unsigned int i = 0; i < 4; i++) {
-		lamps[i] = Lamp(glm::vec3(1.0f),
-			ambient, diffuse, specular,
-			k0, k1, k2,
-			pointLightPositions[i], glm::vec3(0.25f));
-		lamps[i].init();
-	}*/
-
+	PointLight pointLights[4];
 	LampArray lamps;
 	lamps.init();
 	for (unsigned int i = 0; i < 4; i++)
 	{
-		lamps.lightInstances.push_back({
+		pointLights[i] = {
 			pointLightPositions[i],
 			k0, k1, k2,
 			ambient, diffuse, specular
-			});
+		};
+		lamps.lightInstances.push_back(pointLights[i]);
+		scene.pointLights.push_back(&pointLights[i]);
+		States::activate(&scene.activePointLights, i);
 	}
 
-	//Cube cube(Material::gold, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(1.0f));
-	//cube.init();
-
-	//Lamp lamp(glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(1.0f), 1.0f, 0.07f, 0.032f, glm::vec3(-1.0f, -0.5f, -0.5f), glm::vec3(0.25f));
-	//lamp.init();
-
 	SpotLight spotLight = {
-		Camera::defaultCamera.getPos(),
-		Camera::defaultCamera.getFront(),
+		cam.getPos(),
+		cam.getFront(),
 		glm::cos(glm::radians(12.5f)),
 		glm::cos(glm::radians(20.0f)),
 		1.0f, 0.07f, 0.032f,
@@ -171,6 +156,9 @@ int main()
 		glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
 		glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
 	}; // Using camera as spotlight
+
+	scene.spotLights.push_back(&spotLight);
+	scene.activeSpotLights = 1; // Just one so no need to do States::activate
 
 	// Joystick
 	mainJ.update();
@@ -181,9 +169,10 @@ int main()
 
 	glm::mat4 model = glm::mat4(1.0f);
 
-	while (!screen.shouldClose())
+	// Main loop================================
+	while (!scene.shouldClose())
 	{
-		box.offsets.clear();
+		box.positions.clear();
 		box.sizes.clear();
 
 		// Calculate Delta time
@@ -195,67 +184,14 @@ int main()
 		processInput(deltaTime);
 
 		// Render
-		screen.update();
-		shader.activate();
-		shader.set3Float("viewPos", Camera::defaultCamera.getPos());
-
-		bulletShader.activate();
-		bulletShader.set3Float("viewPos", Camera::defaultCamera.getPos());
-
-		shader.activate();
-		dirLight.render(shader);
-		bulletShader.activate();
-		dirLight.render(bulletShader);
-		
-		for (int i = 0; i < 4; i++)
-		{
-			shader.activate();
-			lamps.lightInstances[i].render(shader, i);
-			bulletShader.activate();
-			lamps.lightInstances[i].render(bulletShader, i);
-		}
-		shader.activate();
-		shader.setInt("noPointLights", 4);
-		bulletShader.activate();
-		bulletShader.setInt("noPointLights", 4);
-
-		// Spotlight
-		if (flashLightIsOn)
-		{
-			spotLight.position = Camera::defaultCamera.getPos();
-			spotLight.direction = Camera::defaultCamera.getFront();
-			shader.activate();
-			spotLight.render(shader, 0);
-			shader.setInt("noSpotLights", 1);
-			bulletShader.activate();
-			spotLight.render(bulletShader, 0);
-			bulletShader.setInt("noSpotLights", 1);
-		}
-		else
-		{
-			shader.activate();
-			shader.setInt("noSpotLights", 0);
-			bulletShader.activate();
-			bulletShader.setInt("noSpotLights", 0);
-		}
-
-		// Draw
-		glm::mat4 view = glm::mat4(1.0f);
-		glm::mat4 projection = glm::mat4(1.0f);
-
-		view = Camera::defaultCamera.getViewMatrix();
-		projection = glm::perspective(glm::radians(Camera::defaultCamera.getZoom()), (float)SCREEN_W / (float)SCREEN_H, 0.1f, 100.0f);
-
-		// Set uniform variables
-		shader.activate();
-		shader.setMat4("view", view);
-		shader.setMat4("projection", projection);
+		scene.update();
+		scene.render(shader);
 
 		// Memory optimization
 		stack<int> removeObjects;
 		for (int i = 0; i < bullets.instances.size(); i++)
 		{
-			if (glm::length(Camera::defaultCamera.getPos() - bullets.instances[i].pos) > 300.0f)
+			if (glm::length(scene.getActiveCamera()->getPos() - bullets.instances[i].pos) > 300.0f)
 				removeObjects.push(i);
 		}
 		for (int i = 0; i < removeObjects.size(); i++)
@@ -270,38 +206,30 @@ int main()
 		
 		// Draw Gun
 		shader.activate();
-
 		troll.render(shader, deltaTime, &box);
-		gun.render(shader, deltaTime, &box);
+		gun.render(shader, deltaTime, &box, &scene);
 
 		// Draw Sphere
-		bulletShader.activate();
 		if (bullets.instances.size() > 0)
 		{
-			bulletShader.setMat4("view", view);
-			bulletShader.setMat4("projection", projection);
+			scene.render(bulletShader);
 			bullets.render(bulletShader, deltaTime, &box);
 		}
 
 		// Lamps
-		lampShader.activate();
-		lampShader.setMat4("view", view);
-		lampShader.setMat4("projection", projection);
-		// Draw Lamps
+		scene.render(lampShader, false);
 		lamps.render(lampShader, deltaTime, &box);
 
 		// Draw boxes
-		if (box.offsets.size() > 0)
+		if (box.positions.size() > 0)
 		{
 			// Instances exist
-			boxShader.activate();
-			boxShader.setMat4("view", view);
-			boxShader.setMat4("projection", projection);
+			scene.render(boxShader, false);
 			box.render(boxShader);
 		}
 
 		// Send new frame to window
-		screen.newFrame();
+		scene.newFrame();
 	}
 
 	for (int i = 0; i < 10; i++)
@@ -311,15 +239,15 @@ int main()
 	lamps.cleanup();
 	box.cleanup();
 
-	glfwTerminate();
+	scene.cleanup();
 	return 0;
 }
 
 void launchItem(float deltaTime)
 {
-	RigidBody rb(1.0f, Camera::defaultCamera.getPos());
+	RigidBody rb(1.0f, scene.getActiveCamera()->getPos());
 	rb.applyAcceleration(Environment::gravitationalAcceleration);
-	rb.transferEnergy(5000.f, Camera::defaultCamera.getFront());
+	rb.transferEnergy(5000.f, scene.getActiveCamera()->getFront());
 	//rb.applyImpluse(Camera::defaultCamera.getFront(), 5000.0f, deltaTime);
 	bullets.instances.push_back(rb);
 }
@@ -327,37 +255,32 @@ void launchItem(float deltaTime)
 // Inputs
 void processInput(float deltaTime)
 {
-	if (Keyboard::key(GLFW_KEY_ESCAPE) || mainJ.buttonState(GLFW_JOYSTICK_BTN_RIGHT))
-		screen.setShouldClose(true);
+	scene.processInput(deltaTime);
 
-	// Move camera
-	if (Keyboard::key(GLFW_KEY_W))
-		Camera::defaultCamera.updateCameraPos(CameraDirection::FORWARD, deltaTime);
-	if (Keyboard::key(GLFW_KEY_S))
-		Camera::defaultCamera.updateCameraPos(CameraDirection::BACKWARD, deltaTime);
-	if (Keyboard::key(GLFW_KEY_A))
-		Camera::defaultCamera.updateCameraPos(CameraDirection::LEFT, deltaTime);
-	if (Keyboard::key(GLFW_KEY_D))
-		Camera::defaultCamera.updateCameraPos(CameraDirection::RIGHT, deltaTime);
-	if (Keyboard::key(GLFW_KEY_SPACE))
-		Camera::defaultCamera.updateCameraPos(CameraDirection::UP, deltaTime);
-	if (Keyboard::key(GLFW_KEY_LEFT_CONTROL))
-		Camera::defaultCamera.updateCameraPos(CameraDirection::DOWN, deltaTime);
+	// Update flash light
+	if (States::isActive(&scene.activeSpotLights, 0))
+	{
+		scene.spotLights[0]->position = scene.getActiveCamera()->getPos();
+		scene.spotLights[0]->direction = scene.getActiveCamera()->getFront();
+
+	}
+
+	if (Keyboard::key(GLFW_KEY_ESCAPE) || mainJ.buttonState(GLFW_JOYSTICK_BTN_RIGHT))
+		scene.setShouldClose(true);
 
 	if (Keyboard::keyDown(GLFW_KEY_L))
-		flashLightIsOn = !flashLightIsOn;
-
-	double dx = Mouse::getDX(), dy = Mouse::getDY();
-	if (dx != 0 || dy != 0)
-		Camera::defaultCamera.updateCameraDirection(dx, dy);
-
-	double scrollDy = Mouse::getScrollDY();
-	if(scrollDy != 0)
-		Camera::defaultCamera.updateCameraZoom(scrollDy);
+		States::toggle(&scene.activeSpotLights, 0); // 0 for first spotlight
 
 	if (Mouse::buttonDown(GLFW_MOUSE_BUTTON_1))
 	{
 		launchItem(deltaTime);
+	}
+
+	// Toggle point lights
+	for (int i = 0; i < 4; i++) {
+		if (Keyboard::keyDown(GLFW_KEY_1 + i)) {
+			States::toggle(&scene.activePointLights, i);
+		}
 	}
 
 	// Joystick example

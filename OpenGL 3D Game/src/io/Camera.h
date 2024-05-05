@@ -16,7 +16,6 @@ enum class CameraDirection {
 class Camera
 {
 public:
-	static Camera defaultCamera;
 	Camera(glm::vec3 position);
 
 	void updateCameraDirection(double dx, double dy);
@@ -32,6 +31,7 @@ public:
 
 	glm::mat4 getViewMatrix();
 
+private:
 	glm::vec3 cameraPos;
 	glm::vec3 cameraFront;
 	glm::vec3 cameraUp;

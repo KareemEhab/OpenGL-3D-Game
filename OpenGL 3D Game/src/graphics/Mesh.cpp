@@ -83,45 +83,45 @@ void Mesh::render(Shader shader, glm::vec3 pos, glm::vec3 size, Box* box, bool d
 	{
 		box->addInstance(br, pos, size);
 
-		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, indeces.size(), GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
+		VAO.bind();
+		VAO.draw(GL_TRIANGLES, indeces.size(), GL_UNSIGNED_INT, 0);
+		ArrayObject::clear();
 
 		glActiveTexture(GL_TEXTURE0);
 	}
 }
 
-void Mesh::cleanup()
-{
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
-}
-
 void Mesh::setup()
 {
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
+	// Bind VAO
+	VAO.generate();
+	VAO.bind();
 
-	glBindVertexArray(VAO);
+	// EBO
+	VAO["EBO"] = BufferObject(GL_ELEMENT_ARRAY_BUFFER);
+	VAO["EBO"].generate();
+	VAO["EBO"].bind();
+	VAO["EBO"].setData<GLuint>(indeces.size(), &indeces[0], GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
-	
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indeces.size() * sizeof(unsigned int), &indeces[0], GL_STATIC_DRAW);
+	// VBO
+	VAO["VBO"] = BufferObject(GL_ARRAY_BUFFER);
+	VAO["VBO"].generate();
+	VAO["VBO"].bind();
+	VAO["VBO"].setData<Vertex>(vertices.size(), &vertices[0], GL_STATIC_DRAW);
 
-	// Set vertex attribute pointers
-	// vertex.position
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-	// vertex.normal
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-	// vertex.texCoord
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
+	// Set vertex attrib pointers
+	// positions
+	VAO["VBO"].setAttribPointer<GLfloat>(0, 3, GL_FLOAT, 8, 0);
+	// normal
+	VAO["VBO"].setAttribPointer<GLfloat>(1, 3, GL_FLOAT, 8, 3);
+	// texture
+	VAO["VBO"].setAttribPointer<GLfloat>(2, 2, GL_FLOAT, 8, 6);
 
-	glBindVertexArray(0);
+	VAO["VBO"].clear();
+	ArrayObject::clear();
+}
+
+void Mesh::cleanup()
+{
+	VAO.cleanup();
 }

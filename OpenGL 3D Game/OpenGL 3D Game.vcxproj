@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\algorithms\Bound.cpp" />
     <ClCompile Include="src\physics\Environment.cpp" />
     <ClCompile Include="src\physics\RigidBody.cpp" />
@@ -158,7 +159,6 @@
     <ClCompile Include="src\graphics\Material.cpp" />
     <ClCompile Include="src\graphics\Mesh.cpp" />
     <ClCompile Include="src\graphics\Model.cpp" />
-    <ClCompile Include="src\io\Screen.cpp" />
     <ClCompile Include="src\io\Camera.cpp" />
     <ClCompile Include="src\io\Joystick.cpp" />
     <ClCompile Include="src\io\Keyboard.cpp" />
@@ -182,7 +182,10 @@
     <None Include="assets\object.vs" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Scene.h" />
     <ClInclude Include="src\algorithms\Bound.h" />
+    <ClInclude Include="src\algorithms\States.hpp" />
+    <ClInclude Include="src\graphics\GLMemory.hpp" />
     <ClInclude Include="src\graphics\models\Box.hpp" />
     <ClInclude Include="src\graphics\models\ModelArray.hpp" />
     <ClInclude Include="src\physics\Environment.h" />
@@ -195,7 +198,6 @@
     <ClInclude Include="src\graphics\models\Gun.hpp" />
     <ClInclude Include="src\graphics\models\Lamp.hpp" />
     <ClInclude Include="src\graphics\models\Sphere.hpp" />
-    <ClInclude Include="src\io\Screen.h" />
     <ClInclude Include="src\io\Camera.h" />
     <ClInclude Include="src\io\Joystick.h" />
     <ClInclude Include="src\io\Keyboard.h" />

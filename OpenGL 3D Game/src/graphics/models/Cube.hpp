@@ -66,12 +66,13 @@ public:
 		for (unsigned int i = 0; i < noVertices; i++)
 			indeces[i] = i;
 
-		/*Texture tex("/assets", "/image1.jpg", "material.diffuse");
-		tex.load();*/
+		Texture tex("assets", "/image1.jpg", aiTextureType_DIFFUSE);
+		tex.load();
+        textures_loaded.push_back(tex);
 
         BoundingRegion br(glm::vec3(-0.5f), glm::vec3(0.5f));
 
-		meshes.push_back(Mesh(br, Vertex::genList(vertices, noVertices), indeces));
+		meshes.push_back(Mesh(br, Vertex::genList(vertices, noVertices), indeces, textures_loaded));
 	}
 };
 

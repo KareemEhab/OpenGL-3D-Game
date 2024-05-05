@@ -2,7 +2,7 @@
 
 #pragma once
 
-enum class BoundTypes
+enum class BoundTypes : unsigned char
 {
 	AABB = 0x00, // Axis-aligned bounding box
 	SPHERE = 0x01
