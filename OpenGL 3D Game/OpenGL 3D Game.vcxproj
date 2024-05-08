@@ -183,8 +183,10 @@
     <None Include="assets\object.vs" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\Downloads\trie.hpp" />
     <ClInclude Include="src\algorithms\Octree.h" />
     <ClInclude Include="src\algorithms\List.hpp" />
+    <ClInclude Include="src\algorithms\Trie.hpp" />
     <ClInclude Include="src\Scene.h" />
     <ClInclude Include="src\algorithms\Bound.h" />
     <ClInclude Include="src\algorithms\States.hpp" />

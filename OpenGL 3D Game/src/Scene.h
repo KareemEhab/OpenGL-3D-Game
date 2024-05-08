@@ -10,22 +10,33 @@
 #include "graphics/Light.h"
 #include "graphics/Shader.h"
 #include "graphics/Model.h"
+#include "graphics/models/Box.hpp"
 
 #include "io/Camera.h"
 #include "io/Keyboard.h"
 #include "io/Mouse.h"
 
 #include "algorithms/States.hpp"
+#include "algorithms/Trie.hpp"
+#include "algorithms/Octree.h"
 
 using namespace std;
 
+// Forward decleration
+namespace Octree {
+	class node;
+}
 class Model;
 
 class Scene
 {
 public:
-	map<string, Model*> models;
-	map<string, pair<string, unsigned int>> instances;
+	trie::Trie<Model*> models;
+	trie::Trie<RigidBody*> instances;
+
+	vector<RigidBody*> instancesToDelete;
+
+	Octree::node* octree;
 
 	// Callbacks
 	static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
@@ -35,10 +46,12 @@ public:
 
 	bool init();
 
+	void prepare(Box &box);
+
 	// Main loop methods
 	void processInput(float dt);
 	void update();		// Update screen before each frame
-	void newFrame();	// Update screen after each frame
+	void newFrame(Box &box);	// Update screen after each frame
 	void renderShader(Shader shader, bool applyLighting = true); // Set uniform shader variables (eg: lighting)
 	void renderInstances(string modelId, Shader shader, float dt);
 
@@ -51,10 +64,12 @@ public:
 
 	// Model/instance methods
 	void registerModel(Model* model);
-	string generateInstance(string modelId, glm::vec3 size, float mass, glm::vec3 pos);
+	RigidBody* generateInstance(string modelId, glm::vec3 size, float mass, glm::vec3 pos);
 	void initInstances();
 	void loadModels();
 	void removeInstance(string instanceId);
+	void markForDeletion(string instanceId);
+	void clearDeadInstances();
 
 	string currentId;
 	string generateId();

@@ -76,6 +76,18 @@ bool Scene::init()
 	// Rendering params
 	glEnable(GL_DEPTH_TEST); // Not render vertices not visible to the camera
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // Disable cursor
+
+	//Init octree
+	octree = new Octree::node(BoundingRegion(glm::vec3(-16.0f), glm::vec3(16.0f)));
+
+	return true;
+}
+
+
+// Prepare for main loop after object generation, etc
+void Scene::prepare(Box &box)
+{
+	octree->update(box);
 }
 
 void Scene::processInput(float dt)
@@ -124,8 +136,15 @@ void Scene::update()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Scene::newFrame()
+void Scene::newFrame(Box &box)
 {
+	box.positions.clear();
+	box.sizes.clear();
+
+	// Process pending
+	octree->processPending();
+	octree->update(box);
+
 	glfwSwapBuffers(window);	// Send new frame to window
 	glfwPollEvents();			// For input
 }
@@ -173,8 +192,11 @@ void Scene::renderInstances(string modelId, Shader shader, float dt)
 
 void Scene::cleanup()
 {
-	for (auto& pair : models)
-		pair.second->cleanup();
+	models.traverse([](Model* model) -> void {
+		model->cleanup();
+	});
+
+	octree->destroy();
 
 	glfwTerminate();
 }
@@ -204,33 +226,35 @@ void Scene::setWindowColor(float r, float g, float b, float a)
 
 void Scene::registerModel(Model* model) 
 {
-	models[model->id] = model;
+	models.insert(model->id, model);
 }
 
-string Scene::generateInstance(string modelId, glm::vec3 size, float mass, glm::vec3 pos) 
+RigidBody* Scene::generateInstance(string modelId, glm::vec3 size, float mass, glm::vec3 pos) 
 {
-	unsigned int idx = models[modelId]->generateInstance(size, mass, pos);
-	if (idx != -1) {
+	RigidBody* rb = models[modelId]->generateInstance(size, mass, pos);
+	if (rb) {
 		// Successfully generated
 		string id = generateId();
-		models[modelId]->instances[idx].instanceId = id;
-		instances[id] = { modelId, idx };
-		return id;
+		rb->instanceId = id;
+		instances.insert(id, rb);
+		octree->addToPending(rb, models);
+		return rb;
 	}
-	return "";
+	return nullptr;
 }
 
 void Scene::initInstances() 
 {
-	for (auto& pair : models) {
-		pair.second->initInstances();
-	}
+	models.traverse([](Model* model) -> void {
+		model->initInstances();
+	});
 }
 
 void Scene::loadModels() 
 {
-	for (auto& pair : models)
-		pair.second->init();
+	models.traverse([](Model* model) -> void {
+		model->init();
+	});
 }
 
 void Scene::removeInstance(string instanceId) 
@@ -240,11 +264,22 @@ void Scene::removeInstance(string instanceId)
 		- Scene::instances
 		- Model::instances
 	*/
-
-	string targetModel = instances[instanceId].first;
-	unsigned int targetIdx = instances[instanceId].second;
-
-	models[targetModel]->removeInstance(targetIdx);
-
+	string targetModel = instances[instanceId]->modelId;
+	models[targetModel]->removeInstance(instanceId);
+	instances[instanceId] = nullptr;
 	instances.erase(instanceId);
+}
+
+void Scene::markForDeletion(string instanceId)
+{
+	States::activate(&instances[instanceId]->state, INSTANCE_DEAD);
+	instancesToDelete.push_back(instances[instanceId]);
+}
+
+void Scene::clearDeadInstances()
+{
+	for (RigidBody* rb : instancesToDelete)
+		removeInstance(rb->instanceId);
+
+	instancesToDelete.clear();
 }

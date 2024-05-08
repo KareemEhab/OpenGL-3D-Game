@@ -81,6 +81,9 @@ int main()
 	scene.registerModel(&lamp);
 	scene.registerModel(&sphere);
 
+	Box box;
+	box.init();
+
 	// Load models
 	scene.loadModels();
 
@@ -146,6 +149,8 @@ int main()
 	else
 		cout << "No joystick present." << endl;
 
+	scene.prepare(box);
+
 	// Main loop================================
 	while (!scene.shouldClose())
 	{
@@ -161,17 +166,10 @@ int main()
 		scene.update();
 		
 		// Remove objects if they are too far from the camera
-		stack<unsigned int> objectsToRemove;
 		for (int i = 0; i < sphere.currentNoInstances; i++)
 		{
-			if (glm::length(cam.getPos() - sphere.instances[i].pos) > 250.0f)
-				objectsToRemove.push(i);
-		}
-
-		while (objectsToRemove.size() > 0)
-		{
-			sphere.removeInstance(objectsToRemove.top());
-			objectsToRemove.pop();
+			if (glm::length(cam.getPos() - sphere.instances[i]->pos) > 250.0f)
+				scene.markForDeletion(sphere.instances[i]->instanceId);
 		}
 
 		// Bullets
@@ -185,8 +183,13 @@ int main()
 		scene.renderShader(lampShader);
 		scene.renderInstances(lamp.id, lampShader, deltaTime);
 
+		// Boxes
+		scene.renderShader(boxShader, false);
+		box.render(boxShader);
+
 		// Send new frame to window
-		scene.newFrame();
+		scene.newFrame(box);
+		scene.clearDeadInstances();
 	}
 
 	scene.cleanup();
@@ -195,11 +198,11 @@ int main()
 
 void launchItem(float deltaTime)
 {
-	string id = scene.generateInstance(sphere.id, glm::vec3(0.1f), 1.0f, cam.getPos());
-	if (id != "")
+	RigidBody* rb = scene.generateInstance(sphere.id, glm::vec3(0.1f), 1.0f, cam.getPos());
+	if (rb)
 	{
-		sphere.instances[scene.instances[id].second].transferEnergy(5000.0f, cam.getFront());
-		sphere.instances[scene.instances[id].second].applyAcceleration(Environment::gravitationalAcceleration);
+		rb->transferEnergy(5000.0f, cam.getFront());
+		rb->applyAcceleration(Environment::gravitationalAcceleration);
 	}
 }
 

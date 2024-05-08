@@ -76,6 +76,7 @@ public:
         cubeMesh.loadData(Vertex::genList(vertices, noVertices), indeces);
 
 		meshes.push_back(cubeMesh);
+        boundingRegions.push_back(br);
 	}
 };
 

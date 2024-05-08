@@ -1,4 +1,5 @@
 #include "Bound.h"
+#include "Octree.h"
 
 //	Constructors
 BoundingRegion::BoundingRegion(BoundTypes type)
@@ -6,13 +7,31 @@ BoundingRegion::BoundingRegion(BoundTypes type)
 
 // Sphere
 BoundingRegion::BoundingRegion(glm::vec3 center, float radius)
-	: type(BoundTypes::SPHERE), center(center), radius(radius) {}
+	: type(BoundTypes::SPHERE), center(center), ogCenter(center), radius(radius), ogRadius(radius) {}
 
 // AABB
 BoundingRegion::BoundingRegion(glm::vec3 min, glm::vec3 max)
-	: type(BoundTypes::AABB), min(min), max(max) {}
+	: type(BoundTypes::AABB), min(min), max(max), ogMin(min), ogMax(max) {}
 
 // Calculate values for regions
+
+// Transform for instance
+void BoundingRegion::transform()
+{
+	if (instance)
+	{
+		if(type == BoundTypes::AABB)
+		{
+			min = ogMin * instance->size + instance->pos;
+			max = ogMax * instance->size + instance->pos;
+		}
+		else
+		{
+			center = ogCenter * instance->size + instance->pos;
+			radius = ogRadius * instance->size.x;
+		}
+	}
+}
 
 // Center
 glm::vec3 BoundingRegion::calculateCenter()
@@ -77,10 +96,11 @@ bool BoundingRegion::containsRegion(BoundingRegion br)
 }
 
 // Determine if region intersects (Partialy contains)
-bool BoundingRegion::intersectsWith(BoundingRegion br)
-{
-	// Overlap on all axes
-	if (type == BoundTypes::AABB && br.type == BoundTypes::AABB) {
+bool BoundingRegion::intersectsWith(BoundingRegion br) {
+	// overlap on all axes
+
+	if (type == BoundTypes::AABB && br.type == BoundTypes::AABB) 
+	{
 		// both boxes
 
 		glm::vec3 rad = calculateDimensions() / 2.0f;				// "radius" of this box
@@ -91,8 +111,10 @@ bool BoundingRegion::intersectsWith(BoundingRegion br)
 
 		glm::vec3 dist = abs(center - centerBr);
 
-		for (int i = 0; i < 3; i++) {
-			if (dist[i] > rad[i] + radBr[i]) {
+		for (int i = 0; i < 3; i++) 
+		{
+			if (dist[i] > rad[i] + radBr[i]) 
+			{
 				// no overlap on this axis
 				return false;
 			}
@@ -101,32 +123,27 @@ bool BoundingRegion::intersectsWith(BoundingRegion br)
 		// failed to prove wrong on each axis
 		return true;
 	}
-	else if (type == BoundTypes::SPHERE && br.type == BoundTypes::SPHERE) {
+	else if (type == BoundTypes::SPHERE && br.type == BoundTypes::SPHERE) 
+	{
 		// both spheres - distance between centers must be less than combined radius
-
 		return glm::length(center - br.center) < (radius + br.radius);
 	}
-	else if (type == BoundTypes::SPHERE) {
+	else if (type == BoundTypes::SPHERE) 
+	{
 		// this is a sphere, br is a box
-
-		// determine if sphere is above top, below bottom, etc
-		// find distance (squared) to the closest plane
 		float distSquared = 0.0f;
-		for (int i = 0; i < 3; i++) {
-			if (center[i] < br.min[i]) {
-				// beyond min
-				distSquared += (br.min[i] - center[i]) * (br.min[i] * center[i]);
-			}
-			else if (center[i] > br.max[i]) {
-				// beyond max
-				distSquared += (center[i] - br.max[i]) * (center[i] - br.max[i]);
-			}
-			// else inside
+		for (int i = 0; i < 3; i++) 
+		{
+			// determine closest side
+			float closestPt = std::max(br.min[i], std::min(center[i], br.max[i]));
+			// add distance
+			distSquared += (closestPt - center[i]) * (closestPt - center[i]);
 		}
 
 		return distSquared < (radius* radius);
 	}
-	else {
+	else 
+	{
 		// this is a box, br is a sphere
 		// call algorithm for br (defined in preceding else if block)
 		return br.intersectsWith(*this);
