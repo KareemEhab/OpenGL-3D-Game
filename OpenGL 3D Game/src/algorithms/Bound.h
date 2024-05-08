@@ -22,7 +22,7 @@ public:
 	glm::vec3 max;
 
 	//	Constructors
-	BoundingRegion(BoundTypes type);
+	BoundingRegion(BoundTypes type = BoundTypes::AABB);
 
 	// Sphere
 	BoundingRegion(glm::vec3 center, float radius);
@@ -48,5 +48,8 @@ public:
 
 	// Determine if region intersects (Partially contains)
 	bool intersectsWith(BoundingRegion br);
+
+	// Operator overload
+	bool operator==(BoundingRegion br);
 };
 

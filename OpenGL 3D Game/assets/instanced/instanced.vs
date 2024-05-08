@@ -13,7 +13,8 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-void main() {
+void main() 
+{
 	vec3 pos = aPos * aSize;
 	FragPos = vec3(model * vec4(pos + aOffset, 1.0));
 	Normal = mat3(transpose(inverse(model))) * aNormal;

@@ -6,10 +6,10 @@
 class Gun : public Model
 {
 public:
-	Gun()
-		: Model(BoundTypes::AABB, glm::vec3(0.0f), glm::vec3(1 / 300.0f), true) { }
+	Gun(unsigned int maxNoInstances)
+		: Model("m4a1", BoundTypes::AABB, maxNoInstances, CONST_INSTANCES | NO_TEX) { }
 
-	void render(Shader shader, float dt, Box *box, Scene *scene, bool setModel = false)
+	void render(Shader shader, float dt, Scene *scene, bool setModel = false)
 	{
 		// Set position
 		glm::mat4 model = glm::mat4(1.0f);
@@ -37,6 +37,6 @@ public:
 		model = glm::scale(model, size);
 		shader.setMat4("model", model);
 
-		Model::render(shader, dt, box, false);
+		Model::render(shader, dt, scene, false); // We pass false for setModel because we set it on the line before that
 	}
 };

@@ -29,19 +29,54 @@ vector<Vertex> Vertex::genList(float* vertices, int noVertices)
 	return ret;
 }
 
-Mesh::Mesh(BoundingRegion br, vector<Vertex> vertices, vector<unsigned int> indeces, vector<Texture> textures)
-	: br(br), vertices(vertices), indeces(indeces), textures(textures), noTex(false)
+// Default constructor
+Mesh::Mesh() {}
+
+// Textured object
+Mesh::Mesh(BoundingRegion br, vector<Texture> textures)
+	: br(br), textures(textures), noTex(false) {}
+
+// Material object
+Mesh::Mesh(BoundingRegion br, aiColor4D diff, aiColor4D spec)
+	: br(br), diffuse(diff), specular(spec), noTex(true) {}
+
+// Load vertex and index data
+void Mesh::loadData(vector<Vertex> _vertices, vector<unsigned int> _indices) 
 {
-	setup();
+	this->vertices = _vertices;
+	this->indeces = _indices;
+
+	// bind VAO
+	VAO.generate();
+	VAO.bind();
+
+	// generate/set EBO
+	VAO["EBO"] = BufferObject(GL_ELEMENT_ARRAY_BUFFER);
+	VAO["EBO"].generate();
+	VAO["EBO"].bind();
+	VAO["EBO"].setData<GLuint>(this->indeces.size(), &this->indeces[0], GL_STATIC_DRAW);
+
+	// load data into vertex buffers
+	VAO["VBO"] = BufferObject(GL_ARRAY_BUFFER);
+	VAO["VBO"].generate();
+	VAO["VBO"].bind();
+	VAO["VBO"].setData<Vertex>(this->vertices.size(), &this->vertices[0], GL_STATIC_DRAW);
+
+	// set the vertex attribute pointers
+	VAO["VBO"].bind();
+	// vertex Positions
+	VAO["VBO"].setAttribPointer<GLfloat>(0, 3, GL_FLOAT, 8, 0);
+	// normal ray
+	VAO["VBO"].setAttribPointer<GLfloat>(1, 3, GL_FLOAT, 8, 3);
+	// vertex texture coords
+	VAO["VBO"].setAttribPointer<GLfloat>(2, 3, GL_FLOAT, 8, 6);
+
+	VAO["VBO"].clear();
+
+	ArrayObject::clear();
 }
 
-Mesh::Mesh(BoundingRegion br, vector<Vertex> vertices, vector<unsigned int> indeces, aiColor4D diffuse, aiColor4D specular)
-	: br(br), vertices(vertices), indeces(indeces), diffuse(diffuse), specular(specular), noTex(true)
-{
-	setup();
-}
-
-void Mesh::render(Shader shader, glm::vec3 pos, glm::vec3 size, Box* box, bool doRender)
+void Mesh::render(Shader shader, unsigned int noOfInstances)
 {
 	if (noTex)
 	{
@@ -78,17 +113,11 @@ void Mesh::render(Shader shader, glm::vec3 pos, glm::vec3 size, Box* box, bool d
 			textures[i].bind();
 		}
 	}
+	VAO.bind();
+	VAO.draw(GL_TRIANGLES, indeces.size(), GL_UNSIGNED_INT, 0, noOfInstances);
+	ArrayObject::clear();
 
-	if (doRender)
-	{
-		box->addInstance(br, pos, size);
-
-		VAO.bind();
-		VAO.draw(GL_TRIANGLES, indeces.size(), GL_UNSIGNED_INT, 0);
-		ArrayObject::clear();
-
-		glActiveTexture(GL_TEXTURE0);
-	}
+	glActiveTexture(GL_TEXTURE0);
 }
 
 void Mesh::setup()

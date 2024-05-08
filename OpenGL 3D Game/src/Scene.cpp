@@ -3,6 +3,22 @@
 unsigned int Scene::srcWidth = 0;
 unsigned int Scene::srcHeight = 0;
 
+string Scene::generateId()
+{
+	for (int i = currentId.length() - 1; i >= 0; i--)
+	{
+		if ((int)currentId[i] != (int)'z')
+		{
+			currentId[i] = (char)((int)currentId[i] + 1);
+			break;
+		}
+		else
+			currentId[i] = 'a';
+	}
+
+	return currentId;
+}
+
 void Scene::framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
@@ -10,8 +26,11 @@ void Scene::framebufferSizeCallback(GLFWwindow* window, int width, int height)
 	Scene::srcHeight = height;
 }
 
+Scene::Scene()
+	: currentId("aaaaaaaa") {}
+
 Scene::Scene(int glfwVersionMajor, int glfwVersionMinor, const char* title, unsigned int srcWidth, unsigned int srcHeight)
-	: glfwVersionMajor(glfwVersionMajor), glfwVersionMinor(glfwVersionMinor), title(title), activeCamera(-1), activePointLights(0), activeSpotLights(0)
+	: glfwVersionMajor(glfwVersionMajor), glfwVersionMinor(glfwVersionMinor), title(title), activeCamera(-1), activePointLights(0), activeSpotLights(0), currentId("aaaaaaaa")
 {
 	Scene::srcWidth = srcWidth;
 	Scene::srcHeight = srcHeight;
@@ -64,10 +83,14 @@ void Scene::processInput(float dt)
 	if (activeCamera != -1 && activeCamera < cameras.size())
 	{
 		// Set camera direction
-		//if (Mouse::getDX() != 0 || Mouse::getDY() != 0)
-			cameras[activeCamera]->updateCameraDirection(Mouse::getDX(), Mouse::getDY());
+		double dx = Mouse::getDX();
+		double dy = Mouse::getDY();
+		if (dx != 0 || dy != 0)
+			cameras[activeCamera]->updateCameraDirection(dx, dy);
+		
 		// Set camera zoom
-		//if (Mouse::getScrollDY() != 0)
+		double scrollDy = Mouse::getScrollDY();
+		if (scrollDy != 0)
 			cameras[activeCamera]->updateCameraZoom(Mouse::getScrollDY());
 		
 		// Move camera
@@ -107,7 +130,7 @@ void Scene::newFrame()
 	glfwPollEvents();			// For input
 }
 
-void Scene::render(Shader shader, bool applyLighting)
+void Scene::renderShader(Shader shader, bool applyLighting)
 {
 	// Activate shader
 	shader.activate();
@@ -124,7 +147,7 @@ void Scene::render(Shader shader, bool applyLighting)
 		int activeLights = 0;
 		for (int i = 0; i < pointLights.size(); i++)
 		{
-			if (States::isActive(&activePointLights, i))
+			if (States::isIndexActive(&activePointLights, i))
 				pointLights[i]->render(shader, activeLights++);
 		}
 		shader.setInt("noPointLights", activeLights);
@@ -133,7 +156,7 @@ void Scene::render(Shader shader, bool applyLighting)
 		activeLights = 0;
 		for (int i = 0; i < spotLights.size(); i++)
 		{
-			if (States::isActive(&activeSpotLights, i))
+			if (States::isIndexActive(&activeSpotLights, i))
 				spotLights[i]->render(shader, activeLights++);
 		}
 		shader.setInt("noSpotLights", activeLights);
@@ -143,8 +166,16 @@ void Scene::render(Shader shader, bool applyLighting)
 	}
 }
 
+void Scene::renderInstances(string modelId, Shader shader, float dt)
+{
+	models[modelId]->render(shader, dt, this);
+}
+
 void Scene::cleanup()
 {
+	for (auto& pair : models)
+		pair.second->cleanup();
+
 	glfwTerminate();
 }
 
@@ -169,4 +200,51 @@ void Scene::setWindowColor(float r, float g, float b, float a)
 	bg[1] = g;
 	bg[2] = b;
 	bg[3] = a;
+}
+
+void Scene::registerModel(Model* model) 
+{
+	models[model->id] = model;
+}
+
+string Scene::generateInstance(string modelId, glm::vec3 size, float mass, glm::vec3 pos) 
+{
+	unsigned int idx = models[modelId]->generateInstance(size, mass, pos);
+	if (idx != -1) {
+		// Successfully generated
+		string id = generateId();
+		models[modelId]->instances[idx].instanceId = id;
+		instances[id] = { modelId, idx };
+		return id;
+	}
+	return "";
+}
+
+void Scene::initInstances() 
+{
+	for (auto& pair : models) {
+		pair.second->initInstances();
+	}
+}
+
+void Scene::loadModels() 
+{
+	for (auto& pair : models)
+		pair.second->init();
+}
+
+void Scene::removeInstance(string instanceId) 
+{
+	/*
+		Remove all locations
+		- Scene::instances
+		- Model::instances
+	*/
+
+	string targetModel = instances[instanceId].first;
+	unsigned int targetIdx = instances[instanceId].second;
+
+	models[targetModel]->removeInstance(targetIdx);
+
+	instances.erase(instanceId);
 }

@@ -11,8 +11,8 @@ public:
 	glm::vec3 size;
     Material material;
 
-    Cube(glm::vec3 pos = glm::vec3(0.0f), glm::vec3 size = glm::vec3(1.0f))
-    : Model(BoundTypes::AABB, pos, size){ }
+    Cube(unsigned int maxNoInstances)
+    : Model("cube", BoundTypes::AABB, maxNoInstances, CONST_INSTANCES | NO_TEX) { }
 
 	void init()
 	{
@@ -71,8 +71,11 @@ public:
         textures_loaded.push_back(tex);
 
         BoundingRegion br(glm::vec3(-0.5f), glm::vec3(0.5f));
+        
+        Mesh cubeMesh(br, {});
+        cubeMesh.loadData(Vertex::genList(vertices, noVertices), indeces);
 
-		meshes.push_back(Mesh(br, Vertex::genList(vertices, noVertices), indeces, textures_loaded));
+		meshes.push_back(cubeMesh);
 	}
 };
 

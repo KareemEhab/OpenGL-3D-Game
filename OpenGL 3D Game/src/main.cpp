@@ -54,7 +54,8 @@ unsigned int SCREEN_W = 800, SCREEN_H = 600;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-SphereArray bullets;
+// Models Global======================
+Sphere sphere(10);
 
 int main()
 {
@@ -71,41 +72,17 @@ int main()
 	scene.activeCamera = 0;
 
 	// Shaders==========================
-	Shader shader("assets/object.vs", "assets/object.fs");
-	Shader lampShader("assets/object.vs", "assets/lamp.fs");
-	Shader bulletShader("assets/instanced/instanced.vs", "assets/object.fs");
+	Shader lampShader("assets/instanced/instanced.vs", "assets/lamp.fs");
+	Shader shader("assets/instanced/instanced.vs", "assets/object.fs");
 	Shader boxShader("assets/instanced/box.vs", "assets/instanced/box.fs");
 
 	// Models==========================
-	Gun gun;
-	gun.loadModel("assets/models/m4a1/scene.gltf");
+	Lamp lamp(4);
+	scene.registerModel(&lamp);
+	scene.registerModel(&sphere);
 
-	Model troll(BoundTypes::AABB, glm::vec3(0.0f), glm::vec3(0.1f), false);
-	troll.loadModel("assets/models/lotr_troll/scene.gltf");
-
-	bullets.init();
-
-	Box box;
-	box.init();
-
-	glm::vec3 cubePositions[] = {
-		glm::vec3(0.0f,  0.0f,  0.0f),
-		glm::vec3(2.0f,  5.0f, -15.0f),
-		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3(2.4f, -0.4f, -3.5f),
-		glm::vec3(-1.7f,  3.0f, -7.5f),
-		glm::vec3(1.3f, -2.0f, -2.5f),
-		glm::vec3(1.5f,  2.0f, -2.5f),
-		glm::vec3(1.5f,  0.2f, -1.5f),
-		glm::vec3(-1.3f,  1.0f, -1.5f)
-	};
-
-	Cube cubes[10];
-	for (unsigned int i = 0; i < 10; i++) {
-		cubes[i] = Cube(cubePositions[i], glm::vec3(1.0f));
-		cubes[i].init();
-	}
+	// Load models
+	scene.loadModels();
 
 	// Lights=========================
 
@@ -132,8 +109,7 @@ int main()
 	float k2 = 0.032f;
 
 	PointLight pointLights[4];
-	LampArray lamps;
-	lamps.init();
+
 	for (unsigned int i = 0; i < 4; i++)
 	{
 		pointLights[i] = {
@@ -141,7 +117,7 @@ int main()
 			k0, k1, k2,
 			ambient, diffuse, specular
 		};
-		lamps.lightInstances.push_back(pointLights[i]);
+		scene.generateInstance(lamp.id, glm::vec3(0.25f), 1.0f, pointLightPositions[i]);
 		scene.pointLights.push_back(&pointLights[i]);
 		States::activate(&scene.activePointLights, i);
 	}
@@ -160,21 +136,19 @@ int main()
 	scene.spotLights.push_back(&spotLight);
 	scene.activeSpotLights = 1; // Just one so no need to do States::activate
 
-	// Joystick
+	// Instantiate Instances
+	scene.initInstances();
+
+	// Joystick==================================
 	mainJ.update();
 	if (mainJ.isPresent())
 		cout << mainJ.getName() << " is present." << endl;
 	else
 		cout << "No joystick present." << endl;
 
-	glm::mat4 model = glm::mat4(1.0f);
-
 	// Main loop================================
 	while (!scene.shouldClose())
 	{
-		box.positions.clear();
-		box.sizes.clear();
-
 		// Calculate Delta time
 		float currentTime = glfwGetTime();
 		deltaTime = currentTime - lastFrame;
@@ -185,59 +159,35 @@ int main()
 
 		// Render
 		scene.update();
-		scene.render(shader);
-
-		// Memory optimization
-		stack<int> removeObjects;
-		for (int i = 0; i < bullets.instances.size(); i++)
-		{
-			if (glm::length(scene.getActiveCamera()->getPos() - bullets.instances[i].pos) > 300.0f)
-				removeObjects.push(i);
-		}
-		for (int i = 0; i < removeObjects.size(); i++)
-		{
-			bullets.instances.erase(bullets.instances.begin() + removeObjects.top());
-			removeObjects.pop();
-		}
-
-		// Draw cubes
-		for (int i = 0; i < 10; i++)
-			cubes[i].render(shader, deltaTime, &box);
 		
-		// Draw Gun
-		shader.activate();
-		troll.render(shader, deltaTime, &box);
-		gun.render(shader, deltaTime, &box, &scene);
-
-		// Draw Sphere
-		if (bullets.instances.size() > 0)
+		// Remove objects if they are too far from the camera
+		stack<unsigned int> objectsToRemove;
+		for (int i = 0; i < sphere.currentNoInstances; i++)
 		{
-			scene.render(bulletShader);
-			bullets.render(bulletShader, deltaTime, &box);
+			if (glm::length(cam.getPos() - sphere.instances[i].pos) > 250.0f)
+				objectsToRemove.push(i);
+		}
+
+		while (objectsToRemove.size() > 0)
+		{
+			sphere.removeInstance(objectsToRemove.top());
+			objectsToRemove.pop();
+		}
+
+		// Bullets
+		if (sphere.currentNoInstances > 0)
+		{
+			scene.renderShader(shader);
+			scene.renderInstances(sphere.id, shader, deltaTime);
 		}
 
 		// Lamps
-		scene.render(lampShader, false);
-		lamps.render(lampShader, deltaTime, &box);
-
-		// Draw boxes
-		if (box.positions.size() > 0)
-		{
-			// Instances exist
-			scene.render(boxShader, false);
-			box.render(boxShader);
-		}
+		scene.renderShader(lampShader);
+		scene.renderInstances(lamp.id, lampShader, deltaTime);
 
 		// Send new frame to window
 		scene.newFrame();
 	}
-
-	for (int i = 0; i < 10; i++)
-		cubes[i].cleanup();
-	gun.cleanup();
-	bullets.cleanup();
-	lamps.cleanup();
-	box.cleanup();
 
 	scene.cleanup();
 	return 0;
@@ -245,11 +195,12 @@ int main()
 
 void launchItem(float deltaTime)
 {
-	RigidBody rb(1.0f, scene.getActiveCamera()->getPos());
-	rb.applyAcceleration(Environment::gravitationalAcceleration);
-	rb.transferEnergy(5000.f, scene.getActiveCamera()->getFront());
-	//rb.applyImpluse(Camera::defaultCamera.getFront(), 5000.0f, deltaTime);
-	bullets.instances.push_back(rb);
+	string id = scene.generateInstance(sphere.id, glm::vec3(0.1f), 1.0f, cam.getPos());
+	if (id != "")
+	{
+		sphere.instances[scene.instances[id].second].transferEnergy(5000.0f, cam.getFront());
+		sphere.instances[scene.instances[id].second].applyAcceleration(Environment::gravitationalAcceleration);
+	}
 }
 
 // Inputs
@@ -258,7 +209,7 @@ void processInput(float deltaTime)
 	scene.processInput(deltaTime);
 
 	// Update flash light
-	if (States::isActive(&scene.activeSpotLights, 0))
+	if (States::isIndexActive(&scene.activeSpotLights, 0))
 	{
 		scene.spotLights[0]->position = scene.getActiveCamera()->getPos();
 		scene.spotLights[0]->direction = scene.getActiveCamera()->getFront();
@@ -269,7 +220,7 @@ void processInput(float deltaTime)
 		scene.setShouldClose(true);
 
 	if (Keyboard::keyDown(GLFW_KEY_L))
-		States::toggle(&scene.activeSpotLights, 0); // 0 for first spotlight
+		States::toggleIndex(&scene.activeSpotLights, 0); // 0 for first spotlight
 
 	if (Mouse::buttonDown(GLFW_MOUSE_BUTTON_1))
 	{
@@ -279,7 +230,7 @@ void processInput(float deltaTime)
 	// Toggle point lights
 	for (int i = 0; i < 4; i++) {
 		if (Keyboard::keyDown(GLFW_KEY_1 + i)) {
-			States::toggle(&scene.activePointLights, i);
+			States::toggleIndex(&scene.activePointLights, i);
 		}
 	}
 

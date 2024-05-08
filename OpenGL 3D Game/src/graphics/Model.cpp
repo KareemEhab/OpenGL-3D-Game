@@ -1,43 +1,146 @@
-#include "model.h"
+#include "Model.h"
 
-#include "../physics/environment.h"
+#include "../physics/Environment.h"
 
 #include <iostream>
 
-Model::Model(BoundTypes boundType, glm::vec3 pos, glm::vec3 size, bool noTex)
-	: boundType(boundType), size(size), noTex(noTex) {
-	rb.pos = pos;
+Model::Model(string id, BoundTypes boundType, unsigned int maxNoInstances, unsigned int flags)
+	: id(id), boundType(boundType), switches(flags), currentNoInstances(0), maxNoInstances(maxNoInstances) {}
+
+unsigned int Model::generateInstance(glm::vec3 size, float mass, glm::vec3 pos)
+{
+	if (currentNoInstances >= maxNoInstances) // All slots filled
+		return -1;
+
+	instances.push_back(RigidBody(&id, size, mass, pos));
+	return currentNoInstances++;
 }
 
-void Model::render(Shader shader, float dt, Box *box, bool setModel, bool doRender) {
-	rb.update(dt);
+void Model::initInstances() 
+{
+	glm::vec3* posData = nullptr;
+	glm::vec3* sizeData = nullptr;
+	GLenum usage = GL_DYNAMIC_DRAW;
 
-	if (setModel) {
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, rb.pos);
-		model = glm::scale(model, size);
-		shader.setMat4("model", model);
+	vector<glm::vec3> positions, sizes;
+
+	if (States::isActive(&switches, CONST_INSTANCES)) 
+	{
+		// Set data pointers
+		for (unsigned int i = 0; i < currentNoInstances; i++) 
+		{
+			positions.push_back(instances[i].pos);
+			sizes.push_back(instances[i].size);
+		}
+
+		if (positions.size() > 0) 
+		{
+			posData = &positions[0];
+			sizeData = &sizes[0];
+		}
+
+		usage = GL_STATIC_DRAW;
+	}
+
+	// Generate positions VBO
+	posVBO = BufferObject(GL_ARRAY_BUFFER);
+	posVBO.generate();
+	posVBO.bind();
+	posVBO.setData<glm::vec3>(UPPER_BOUND, posData, GL_DYNAMIC_DRAW);
+
+	// Generate size VBO
+	sizeVBO = BufferObject(GL_ARRAY_BUFFER);
+	sizeVBO.generate();
+	sizeVBO.bind();
+	sizeVBO.setData<glm::vec3>(UPPER_BOUND, sizeData, GL_DYNAMIC_DRAW);
+
+	// Set attribute pointers for each mesh
+	for (unsigned int i = 0, size = meshes.size(); i < size; i++) 
+	{
+		meshes[i].VAO.bind();
+
+		// Set vertex attrib pointers
+		// positions
+		posVBO.bind();
+		posVBO.setAttribPointer<glm::vec3>(3, 3, GL_FLOAT, 1, 0, 1);
+		// size
+		sizeVBO.bind();
+		sizeVBO.setAttribPointer<glm::vec3>(4, 3, GL_FLOAT, 1, 0, 1);
+
+		ArrayObject::clear();
+	}
+}
+
+void Model::removeInstance(unsigned int idx) 
+{
+	instances.erase(instances.begin() + idx);
+	currentNoInstances--;
+}
+
+unsigned int Model::getIdx(std::string id) 
+{
+	for (int i = 0; i < currentNoInstances; i++) 
+	{
+		if (instances[i].instanceId == id)
+			return i;
+	}
+	return -1;
+}
+
+void Model::init() {}
+
+
+void Model::render(Shader shader, float dt, Scene *scene, bool setModel) 
+{
+	if (setModel)
+		shader.setMat4("model", glm::mat4(1.0f));
+
+	if (!States::isActive(&switches, CONST_INSTANCES)) 
+	{
+		// Update VBO data
+		vector<glm::vec3> positions, sizes;
+
+		bool doUpdate = States::isActive(&switches, DYNAMIC);
+
+		for (int i = 0; i < currentNoInstances; i++) 
+		{
+			if (doUpdate) // Update Rigid Body	
+				instances[i].update(dt);
+
+			positions.push_back(instances[i].pos);
+			sizes.push_back(instances[i].size);
+		}
+
+		posVBO.bind();
+		posVBO.updateData<glm::vec3>(0, currentNoInstances, &positions[0]);
+
+		sizeVBO.bind();
+		sizeVBO.updateData<glm::vec3>(0, currentNoInstances, &sizes[0]);
 	}
 
 	shader.setFloat("material.shininess", 0.5f);
 
-	for (unsigned int i = 0; i < meshes.size(); i++) {
-		meshes[i].render(shader,rb.pos, size, box, doRender);
-	}
+	for (unsigned int i = 0, noMeshes = meshes.size(); i < noMeshes; i++)
+		meshes[i].render(shader, currentNoInstances);
 }
 
-void Model::cleanup() {
-	for (unsigned int i = 0; i < meshes.size(); i++) {
+void Model::cleanup() 
+{
+	for (unsigned int i = 0; i < meshes.size(); i++)
 		meshes[i].cleanup();
-	}
+
+	posVBO.cleanup();
+	sizeVBO.cleanup();
 }
 
-void Model::loadModel(std::string path) {
+void Model::loadModel(std::string path) 
+{
 	Assimp::Importer import;
 	const aiScene* scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 
-	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-		std::cout << "Could not load model at " << path << std::endl << import.GetErrorString() << std::endl;
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
+	{
+		cout << "Could not load model at " << path << endl << import.GetErrorString() << std::endl;
 		return;
 	}
 
@@ -46,23 +149,25 @@ void Model::loadModel(std::string path) {
 	processNode(scene->mRootNode, scene);
 }
 
-void Model::processNode(aiNode* node, const aiScene* scene) {
+void Model::processNode(aiNode* node, const aiScene* scene) 
+{
 	// process all meshes
-	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+	for (unsigned int i = 0; i < node->mNumMeshes; i++) 
+	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 		meshes.push_back(processMesh(mesh, scene));
 	}
 
 	// process all child nodes
-	for (unsigned int i = 0; i < node->mNumChildren; i++) {
+	for (unsigned int i = 0; i < node->mNumChildren; i++)
 		processNode(node->mChildren[i], scene);
-	}
 }
 
-Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
-	std::vector<Vertex> vertices;
-	std::vector<unsigned int> indices;
-	std::vector<Texture> textures;
+Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) 
+{
+	vector<Vertex> vertices;
+	vector<unsigned int> indices;
+	vector<Texture> textures;
 
 	BoundingRegion br(boundType);
 	glm::vec3 min((float)(~0)); // Min points = max float
@@ -103,9 +208,8 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
 				mesh->mTextureCoords[0][i].y
 			);
 		}
-		else {
+		else
 			vertex.texCoord = glm::vec2(0.0f);
-		}
 
 		vertices.push_back(vertex);
 	}
@@ -133,61 +237,73 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
 		br.radius = sqrt(maxRadiusSquared);
 	}
 
-	// process indices
-	for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+	// Process indices
+	for (unsigned int i = 0; i < mesh->mNumFaces; i++) 
+	{
 		aiFace face = mesh->mFaces[i];
-		for (unsigned int j = 0; j < face.mNumIndices; j++) {
+		for (unsigned int j = 0; j < face.mNumIndices; j++)
 			indices.push_back(face.mIndices[j]);
-		}
 	}
 
+	Mesh ret;
+
 	// process material
-	if (mesh->mMaterialIndex >= 0) {
+	if (mesh->mMaterialIndex >= 0) 
+	{
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-		if (noTex) {
-			// diffuse color
+		if (States::isActive<int>(&switches, NO_TEX)) 
+		{
+			// Diffuse colors
 			aiColor4D diff(1.0f);
 			aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diff);
-
-			// specular color
+			// Specular colors
 			aiColor4D spec(1.0f);
 			aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &spec);
 
-			return Mesh(br, vertices, indices, diff, spec);
+			ret = Mesh(br, diff, spec);
 		}
+		else 
+		{
+			// 1. diffuse maps
+			vector<Texture> diffuseMaps = loadTextures(material, aiTextureType_DIFFUSE);
+			textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+			// 2. specular maps
+			vector<Texture> specularMaps = loadTextures(material, aiTextureType_SPECULAR);
+			textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 
-		// diffuse maps
-		std::vector<Texture> diffuseMaps = loadTextures(material, aiTextureType_DIFFUSE);
-		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-
-		// specular maps
-		std::vector<Texture> specularMaps = loadTextures(material, aiTextureType_SPECULAR);
-		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+			ret = Mesh(br, textures);
+		}
 	}
 
-	return Mesh(br, vertices, indices, textures);
+	ret.loadData(vertices, indices);
+	return ret;
 }
 
-std::vector<Texture> Model::loadTextures(aiMaterial* mat, aiTextureType type) {
-	std::vector<Texture> textures;
+vector<Texture> Model::loadTextures(aiMaterial* mat, aiTextureType type) 
+{
+	vector<Texture> textures;
 
-	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
+	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) 
+	{
 		aiString str;
 		mat->GetTexture(type, i, &str);
 
-		// prevent duplicate loading
+		// Prevent duplicate loading
 		bool skip = false;
-		for (unsigned int j = 0; j < textures_loaded.size(); j++) {
-			if (std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0) {
+		for (unsigned int j = 0; j < textures_loaded.size(); j++) 
+		{
+			if (strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0) 
+			{
 				textures.push_back(textures_loaded[j]);
 				skip = true;
 				break;
 			}
 		}
 
-		if (!skip) {
-			// not loaded yet
+		if (!skip) 
+		{
+			// Not loaded yet
 			Texture tex(directory, str.C_Str(), type);
 			tex.load(false);
 			textures.push_back(tex);

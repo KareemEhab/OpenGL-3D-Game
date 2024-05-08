@@ -1,29 +1,19 @@
 #ifndef SPHERE_HPP
 #define SPHERE_HPP
 
-#include "../model.h"
-#include "modelarray.hpp"
+#include "../Model.h"
 
-class Sphere : public Model {
+class Sphere : public Model
+{
 public:
-	Sphere(glm::vec3 pos = glm::vec3(0.0f), glm::vec3 size = glm::vec3(1.0f))
-		: Model(BoundTypes::SPHERE, pos, size, true) {
-		rb.mass = 1.0f;
-	}
+	Sphere(unsigned int maxNoInstances)
+		: Model("sphere", BoundTypes::SPHERE, maxNoInstances, NO_TEX | DYNAMIC) {}
 
 	void init() {
-		Texture tex("assets", "/image1.jpg", aiTextureType_DIFFUSE);
+		/*Texture tex("assets", "/image1.jpg", aiTextureType_DIFFUSE);
 		tex.load();
-		textures_loaded.push_back(tex);
+		textures_loaded.push_back(tex);*/
 		loadModel("assets/models/sphere/scene.gltf");
-	}
-};
-
-class SphereArray : public ModelArray<Sphere> {
-public:
-	void init() {
-		model = Sphere(glm::vec3(0.0f), glm::vec3(0.25f));
-		ModelArray::init();
 	}
 };
 
