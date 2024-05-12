@@ -61,6 +61,7 @@ in vec2 TexCoord;
 
 uniform Material material;
 uniform bool useBlinn;
+uniform bool useGamma;
 
 uniform vec3 viewPos;
 
@@ -97,6 +98,11 @@ void main() {
 	// spot lights
 	for (int i = 0; i < noSpotLights; i++) {
 		result += calcSpotLight(i, norm, viewDir, texDiff, texSpec);
+	}
+
+	if(useGamma) {
+		float gamma = 2.2;
+		result.rgb = pow(result.rgb, vec3(1.0 / gamma));
 	}
 
 	FragColor = result;

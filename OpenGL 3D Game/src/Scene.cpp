@@ -99,6 +99,7 @@ bool Scene::init()
 
 	// Setup lighting values
 	variableLog["useBlinn"] = true;
+	variableLog["useGamma"] = true;
 
 	return true;
 }
@@ -149,9 +150,11 @@ void Scene::processInput(float dt)
 
 		cameraPos = cameras[activeCamera]->getPos();
 
-		// Update blinn param if necessary
+		// Update lighting params if necessary
 		if(Keyboard::keyDown(GLFW_KEY_B))
 			variableLog["useBlinn"] = !variableLog["useBlinn"].val<bool>();
+		if(Keyboard::keyDown(GLFW_KEY_G))
+			variableLog["useGamma"] = !variableLog["useGamma"].val<bool>();
 	}
 }
 
@@ -208,8 +211,9 @@ void Scene::renderShader(Shader shader, bool applyLighting)
 		// Directional light
 		dirLight->render(shader);
 
-		// Apply blinn if used
+		// Apply blinn and gamma if used
 		shader.setBool("useBlinn", variableLog["useBlinn"].val<bool>());
+		shader.setBool("useGamma", variableLog["useGamma"].val<bool>());
 	}
 }
 
