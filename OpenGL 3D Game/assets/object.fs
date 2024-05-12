@@ -60,6 +60,7 @@ in vec3 Normal;
 in vec2 TexCoord;
 
 uniform Material material;
+uniform bool useBlinn;
 
 uniform vec3 viewPos;
 
@@ -111,10 +112,24 @@ vec4 calcDirLight(vec3 norm, vec3 viewDir, vec4 texDiff, vec4 texSpec) {
 	vec4 diffuse = dirLight.diffuse * (diff * texDiff);
 
 	// specular
-	vec3 reflectDir = reflect(-lightDir, norm);
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess * 128);
-	vec4 specular = dirLight.specular * (spec * texSpec);
-
+	vec4 specular = vec4(0.0, 0.0, 0.0, 1.0);
+	if(diff > 0) // If diff <= 0 then object is behind the light
+	{
+		float dotProd = 0.0;
+		if(useBlinn) // calculate using Blinn-Phong model
+		{
+			vec3 halfwayDir = normalize(lightDir + viewDir);
+			dotProd = dot(norm, halfwayDir);
+		}
+		else // calculate using Phong model
+		{
+			vec3 reflectDir = reflect(-lightDir, norm);
+			dotProd = dot(viewDir, reflectDir);
+		}
+		float spec = pow(max(dotProd, 0.0), material.shininess * 128);
+		specular = dirLight.specular * (spec * texSpec);
+	}
+	
 	return vec4(ambient + diffuse + specular);
 }
 
@@ -128,9 +143,23 @@ vec4 calcPointLight(int idx, vec3 norm, vec3 viewDir, vec4 texDiff, vec4 texSpec
 	vec4 diffuse = pointLights[idx].diffuse * (diff * texDiff);
 
 	// specular
-	vec3 reflectDir = reflect(-lightDir, norm);
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess * 128);
-	vec4 specular = pointLights[idx].specular * (spec * texSpec);
+	vec4 specular = vec4(0.0, 0.0, 0.0, 1.0);
+	if(diff > 0) // If diff <= 0 then object is behind the light
+	{
+		float dotProd = 0.0;
+		if(useBlinn) // calculate using Blinn-Phong model
+		{
+			vec3 halfwayDir = normalize(lightDir + viewDir);
+			dotProd = dot(norm, halfwayDir);
+		}
+		else // calculate using Phong model
+		{
+			vec3 reflectDir = reflect(-lightDir, norm);
+			dotProd = dot(viewDir, reflectDir);
+		}
+		float spec = pow(max(dotProd, 0.0), material.shininess * 128);
+		specular = dirLight.specular * (spec * texSpec);
+	}
 
 	// calculate attenuation
 	float dist = length(pointLights[idx].position - FragPos);
@@ -160,9 +189,23 @@ vec4 calcSpotLight(int idx, vec3 norm, vec3 viewDir, vec4 texDiff, vec4 texSpec)
 		vec4 diffuse = spotLights[idx].diffuse * (diff * texDiff);
 
 		// specular
-		vec3 reflectDir = reflect(-lightDir, norm);
-		float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess * 128);
-		vec4 specular = spotLights[idx].specular * (spec * texSpec);
+		vec4 specular = vec4(0.0, 0.0, 0.0, 1.0);
+		if(diff > 0) // If diff <= 0 then object is behind the light
+		{
+			float dotProd = 0.0;
+			if(useBlinn) // calculate using Blinn-Phong model
+			{
+				vec3 halfwayDir = normalize(lightDir + viewDir);
+				dotProd = dot(norm, halfwayDir);
+			}
+			else // calculate using Phong model
+			{
+				vec3 reflectDir = reflect(-lightDir, norm);
+				dotProd = dot(viewDir, reflectDir);
+			}
+			float spec = pow(max(dotProd, 0.0), material.shininess * 128);
+			specular = dirLight.specular * (spec * texSpec);
+		}
 
 		// calculate Intensity
 		float intensity = clamp((theta - spotLights[idx].outerCutOff) / (spotLights[idx].cutOff - spotLights[idx].outerCutOff), 0.0, 1.0);

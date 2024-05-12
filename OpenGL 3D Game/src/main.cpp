@@ -100,6 +100,9 @@ int main()
 	Box box;
 	box.init();
 
+	Cube cube(1);
+	scene.registerModel(&cube);
+
 	// Load models
 	scene.loadModels();
 
@@ -157,6 +160,9 @@ int main()
 	scene.spotLights.push_back(&spotLight);
 	scene.activeSpotLights = 1; // Just one so no need to do States::activate
 
+	// Cube
+	scene.generateInstance(cube.id, glm::vec3(20.0f, 0.1f, 20.0f), 100.0f, glm::vec3(0.0f, -3.0f, 0.0f));
+
 	// Instantiate Instances
 	scene.initInstances();
 
@@ -201,11 +207,11 @@ int main()
 		}
 
 		// Bullets
+		scene.renderShader(shader);
 		if (sphere.currentNoInstances > 0)
-		{
-			scene.renderShader(shader);
 			scene.renderInstances(sphere.id, shader, deltaTime);
-		}
+		
+		scene.renderInstances(cube.id, shader, deltaTime);
 
 		// Gun
 		scene.renderShader(shader);

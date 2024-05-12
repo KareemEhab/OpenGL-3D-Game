@@ -70,9 +70,12 @@ public:
 		tex.load();
         textures_loaded.push_back(tex);
 
+        aiColor4D diff(Material::red_plastic.diffuse.r, Material::red_plastic.diffuse.g, Material::red_plastic.diffuse.b, 1.0f);
+        aiColor4D spec(Material::red_plastic.specular.r, Material::red_plastic.specular.g, Material::red_plastic.specular.b, 1.0f);
+
         BoundingRegion br(glm::vec3(-0.5f), glm::vec3(0.5f));
         
-        Mesh cubeMesh(br, {});
+        Mesh cubeMesh(br, diff, spec);
         cubeMesh.loadData(Vertex::genList(vertices, noVertices), indeces);
 
 		meshes.push_back(cubeMesh);

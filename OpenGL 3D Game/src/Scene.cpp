@@ -97,6 +97,9 @@ bool Scene::init()
 		return false;
 	}
 
+	// Setup lighting values
+	variableLog["useBlinn"] = true;
+
 	return true;
 }
 
@@ -145,6 +148,10 @@ void Scene::processInput(float dt)
 		textProjection = glm::ortho(0.0f, (float)srcWidth, 0.0f, (float)srcHeight);
 
 		cameraPos = cameras[activeCamera]->getPos();
+
+		// Update blinn param if necessary
+		if(Keyboard::keyDown(GLFW_KEY_B))
+			variableLog["useBlinn"] = !variableLog["useBlinn"].val<bool>();
 	}
 }
 
@@ -200,6 +207,9 @@ void Scene::renderShader(Shader shader, bool applyLighting)
 
 		// Directional light
 		dirLight->render(shader);
+
+		// Apply blinn if used
+		shader.setBool("useBlinn", variableLog["useBlinn"].val<bool>());
 	}
 }
 
