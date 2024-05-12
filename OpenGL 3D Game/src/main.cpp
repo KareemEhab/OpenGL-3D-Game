@@ -15,11 +15,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <assimp/anim.h>
+#include <ft2build.h>
 
 #include "graphics/Shader.h"
 #include "graphics/Texture.h"
 #include "graphics/Light.h"
 #include "graphics/Model.h"
+#include "graphics/Cubemap.h"
 
 #include "graphics/models/Cube.hpp"
 #include "graphics/models/Lamp.hpp"
@@ -75,8 +77,22 @@ int main()
 	Shader lampShader("assets/instanced/instanced.vs", "assets/lamp.fs");
 	Shader shader("assets/instanced/instanced.vs", "assets/object.fs");
 	Shader boxShader("assets/instanced/box.vs", "assets/instanced/box.fs");
+	Shader textShader("assets/text.vs", "assets/text.fs");
+	Shader skyboxShader("assets/skybox/skybox.vs", "assets/skybox/skybox.fs");
+	/*Shader skyboxShader("assets/skybox/skybox.vs", "assets/skybox/sky.fs");
+	skyboxShader.activate();
+	skyboxShader.set3Float("min", 0.047f, 0.016f, 0.239f);
+	skyboxShader.set3Float("min", 0.945f, 1.000f, 0.682f);*/
+
+	// Skybox===========================
+	Cubemap skybox;
+	skybox.init();
+	skybox.loadTextures("assets/skybox");
 
 	// Models==========================
+	Gun gun(1);
+	scene.registerModel(&gun);
+
 	Lamp lamp(4);
 	scene.registerModel(&lamp);
 	scene.registerModel(&sphere);
@@ -86,6 +102,8 @@ int main()
 
 	// Load models
 	scene.loadModels();
+
+	scene.generateInstance(gun.id, glm::vec3(0.05f), 1.0f, cam.getPos());
 
 	// Lights=========================
 
@@ -151,6 +169,8 @@ int main()
 
 	scene.prepare(box);
 
+	scene.variableLog["time"] = (double)0.0;
+
 	// Main loop================================
 	while (!scene.shouldClose())
 	{
@@ -159,11 +179,19 @@ int main()
 		deltaTime = currentTime - lastFrame;
 		lastFrame = currentTime;
 
+		scene.variableLog["time"] += deltaTime;
+		scene.variableLog["fps"] = 1 / deltaTime;
+
 		// Process Input
 		processInput(deltaTime);
 
 		// Render
 		scene.update();
+
+		// Render Skybox
+		//skyboxShader.activate();
+		//skyboxShader.setFloat("time", scene.variableLog["time"].val<float>());
+		skybox.render(skyboxShader, &scene);
 		
 		// Remove objects if they are too far from the camera
 		for (int i = 0; i < sphere.currentNoInstances; i++)
@@ -179,6 +207,10 @@ int main()
 			scene.renderInstances(sphere.id, shader, deltaTime);
 		}
 
+		// Gun
+		scene.renderShader(shader);
+		scene.renderInstances(gun.id, shader, deltaTime);
+
 		// Lamps
 		scene.renderShader(lampShader);
 		scene.renderInstances(lamp.id, lampShader, deltaTime);
@@ -187,11 +219,17 @@ int main()
 		scene.renderShader(boxShader, false);
 		box.render(boxShader);
 
+		// Render Text
+		scene.renderText("comic", textShader, "Hello World", 50.0f, 50.0f, glm::vec2(1.0f), glm::vec3(0.5f, 0.6f, 1.0f));
+		scene.renderText("comic", textShader, "Time: " + scene.variableLog["time"].dump(), 50.0f, 550.0f, glm::vec2(1.0f), glm::vec3(1.0f));
+		scene.renderText("comic", textShader, "FPS: " + scene.variableLog["fps"].dump(), 50.0f, 500.0f, glm::vec2(1.0f), glm::vec3(1.0f));	
+
 		// Send new frame to window
 		scene.newFrame(box);
 		scene.clearDeadInstances();
 	}
 
+	skybox.cleanup();
 	scene.cleanup();
 	return 0;
 }

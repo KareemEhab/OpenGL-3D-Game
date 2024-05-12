@@ -6,10 +6,14 @@
 #include <map>
 
 #include <glm/glm.hpp>
+#include <jsoncpp/json.hpp>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 #include "graphics/Light.h"
 #include "graphics/Shader.h"
 #include "graphics/Model.h"
+#include "graphics/Text.h"
 #include "graphics/models/Box.hpp"
 
 #include "io/Camera.h"
@@ -38,6 +42,13 @@ public:
 
 	Octree::node* octree;
 
+	// Map for logged variables
+	jsoncpp::json variableLog;
+
+	// Freetype library
+	FT_Library ft;
+	trie::Trie<TextRenderer> fonts;
+
 	// Callbacks
 	static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
@@ -53,7 +64,8 @@ public:
 	void update();		// Update screen before each frame
 	void newFrame(Box &box);	// Update screen after each frame
 	void renderShader(Shader shader, bool applyLighting = true); // Set uniform shader variables (eg: lighting)
-	void renderInstances(string modelId, Shader shader, float dt);
+	void renderInstances(string modelId, Shader shader, float dt); \
+	void renderText(string font, Shader shader, string text, float x, float y, glm::vec2 scale, glm::vec3 color);
 
 	void cleanup();
 
@@ -89,6 +101,7 @@ public:
 	unsigned int activeCamera;
 	glm::mat4 view;
 	glm::mat4 projection;
+	glm::mat4 textProjection;
 	glm::vec3 cameraPos;
 
 protected:

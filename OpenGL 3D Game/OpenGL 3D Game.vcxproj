@@ -130,7 +130,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;assimp\assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype\freetype.lib;opengl32.lib;glfw3.lib;assimp\assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\graphics\Cubemap.cpp" />
     <ClCompile Include="src\algorithms\Octree.cpp" />
     <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\algorithms\Bound.cpp" />
@@ -169,6 +170,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="lib\stb.cpp" />
     <ClCompile Include="src\graphics\Texture.cpp" />
+    <ClCompile Include="src\graphics\Text.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\instanced\box.vs" />
@@ -181,9 +183,15 @@
     <None Include="assets\object.fs" />
     <None Include="assets\instanced\box.fs" />
     <None Include="assets\object.vs" />
+    <None Include="assets\skybox\sky.fs" />
+    <None Include="assets\skybox\skybox.fs" />
+    <None Include="assets\skybox\skybox.vs" />
+    <None Include="assets\text.fs" />
+    <None Include="assets\text.vs" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\Downloads\trie.hpp" />
+    <ClInclude Include="src\graphics\Cubemap.h" />
     <ClInclude Include="src\algorithms\Octree.h" />
     <ClInclude Include="src\algorithms\List.hpp" />
     <ClInclude Include="src\algorithms\Trie.hpp" />
@@ -208,6 +216,7 @@
     <ClInclude Include="src\io\Mouse.h" />
     <ClInclude Include="src\graphics\Shader.h" />
     <ClInclude Include="src\graphics\Texture.h" />
+    <ClInclude Include="src\graphics\Text.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="assets\image1.jpg" />
@@ -220,10 +229,21 @@
     <Image Include="assets\models\lotr_troll\textures\TEX_Troll_emissive.jpeg" />
     <Image Include="assets\models\lotr_troll\textures\TEX_Troll_metallicRoughness.png" />
     <Image Include="assets\models\lotr_troll\textures\TEX_Troll_normal.png" />
+    <Image Include="assets\skybox\back.png" />
+    <Image Include="assets\skybox\bottom.png" />
+    <Image Include="assets\skybox\front.png" />
+    <Image Include="assets\skybox\left.png" />
+    <Image Include="assets\skybox\right.png" />
+    <Image Include="assets\skybox\skybox.png" />
+    <Image Include="assets\skybox\top.png" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="assets\models\lotr_troll\license.txt" />
     <Text Include="assets\models\m4a1\license.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="assets\fonts\comic.ttf" />
+    <Font Include="assets\fonts\SansSerifCollection.ttf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

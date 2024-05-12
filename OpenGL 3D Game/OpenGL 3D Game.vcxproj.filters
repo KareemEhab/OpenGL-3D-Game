@@ -69,6 +69,12 @@
     <ClCompile Include="src\algorithms\Octree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\Text.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Cubemap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\object.vs" />
@@ -85,6 +91,11 @@
     <None Include="assets\models\m4a1\scene.gltf" />
     <None Include="assets\instanced\instanced.vs" />
     <None Include="assets\instanced\box.vs" />
+    <None Include="assets\text.fs" />
+    <None Include="assets\text.vs" />
+    <None Include="assets\skybox\skybox.fs" />
+    <None Include="assets\skybox\skybox.vs" />
+    <None Include="assets\skybox\sky.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\graphics\Shader.h">
@@ -162,6 +173,12 @@
     <ClInclude Include="src\algorithms\Trie.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\Text.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\Cubemap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="assets\models\lotr_troll\textures\TEX_pants_baseColor.png">
@@ -194,9 +211,34 @@
     <Image Include="assets\image3.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="assets\skybox\back.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\skybox\bottom.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\skybox\front.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\skybox\left.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\skybox\right.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\skybox\skybox.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\skybox\top.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Text Include="assets\models\lotr_troll\license.txt" />
     <Text Include="assets\models\m4a1\license.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="assets\fonts\SansSerifCollection.ttf" />
+    <Font Include="assets\fonts\comic.ttf" />
   </ItemGroup>
 </Project>

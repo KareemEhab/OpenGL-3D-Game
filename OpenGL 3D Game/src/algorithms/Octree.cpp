@@ -408,20 +408,15 @@ void Octree::node::checkCollisionsChildren(BoundingRegion obj)
 }
 
 // Destroy object (free memory)
-void Octree::node::destroy() 
-{
-    // Clearing out children
-    if (children != nullptr) 
-    {
+void Octree::node::destroy() {
+    // clearing out children
+    if (children != nullptr) {
         for (int flags = activeOctants, i = 0;
             flags > 0;
-            flags >> 1, i++) 
-        {
-            if (States::isIndexActive(&flags, 0))
-            {
-                // Active
-                if (children[i] != nullptr) 
-                {
+            flags >>= 1, i++) {
+            if (States::isIndexActive(&flags, 0)) {
+                // active
+                if (children[i] != nullptr) {
                     children[i]->destroy();
                     children[i] = nullptr;
                 }
@@ -429,8 +424,9 @@ void Octree::node::destroy()
         }
     }
 
-    // Clear this node
+    // clear this node
     objects.clear();
-    while (queue.size() != 0)
+    while (queue.size() != 0) {
         queue.pop();
+    }
 }

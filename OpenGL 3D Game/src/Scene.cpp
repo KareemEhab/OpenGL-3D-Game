@@ -75,10 +75,27 @@ bool Scene::init()
 
 	// Rendering params
 	glEnable(GL_DEPTH_TEST); // Not render vertices not visible to the camera
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // Disable cursor
 
 	//Init octree
 	octree = new Octree::node(BoundingRegion(glm::vec3(-16.0f), glm::vec3(16.0f)));
+
+	// Initialize freetype library
+	if (FT_Init_FreeType(&ft))
+	{
+		cout << "Could not init FreeType library" << endl;
+		return false;
+	}
+
+	// Insert font
+	fonts.insert("comic", TextRenderer(32));
+	if (!fonts["comic"].loadFont(ft, "assets/fonts/comic.ttf"))
+	{
+		cout << "Could not load SansSerifCollection font" << endl;
+		return false;
+	}
 
 	return true;
 }
@@ -125,6 +142,7 @@ void Scene::processInput(float dt)
 			(float)srcWidth / (float)srcHeight,				// Aspect ratio
 			0.1f, 100.0f									// Near and far bounds
 		);
+		textProjection = glm::ortho(0.0f, (float)srcWidth, 0.0f, (float)srcHeight);
 
 		cameraPos = cameras[activeCamera]->getPos();
 	}
@@ -190,11 +208,31 @@ void Scene::renderInstances(string modelId, Shader shader, float dt)
 	models[modelId]->render(shader, dt, this);
 }
 
+void Scene::renderText(string font, Shader shader, string text, float x, float y, glm::vec2 scale, glm::vec3 color)
+{
+	shader.activate();
+	shader.setMat4("projection", textProjection);
+
+	fonts[font].render(shader, text, x, y, scale, color);
+}
+
+
 void Scene::cleanup()
 {
 	models.traverse([](Model* model) -> void {
 		model->cleanup();
 	});
+
+	// Clean up model and instances tries
+	models.cleanup();
+	instances.cleanup();
+
+	fonts.traverse([](TextRenderer tr) -> void {
+		tr.cleanup();
+	});
+
+	// Clean up fonts trie
+	fonts.cleanup();
 
 	octree->destroy();
 
